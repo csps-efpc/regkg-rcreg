@@ -1,0 +1,15 @@
+@prefix justice: <https://laws-lois.justice.gc.ca/ext/> .
+@prefix pco: <https://www.canada.ca/en/privy-council/ext/> .
+@prefix inst: <https://www.canada.ca/en/privy-council/ext/statutory-instrument/> .
+@prefix naics: <http://www.fpml.org/ext/north-american-industry-classification-system/> .
+@prefix app: <http://handshape.com/ext/relationships/> .
+@prefix schema: <https://schema.org/> .
+@prefix recgen: <https://www.tpsgc-pwgsc.gc.ca/recgen/> .
+@prefix rias: <https://www.gazette.gc.ca/ext/> .
+@prefix csps: <https://www.csps-efpc.gc.ca/ext/> .
+    
+# Inline triples can be expressed like:
+# inst:F-14 app:affects naics:11411 .
+# inst:F-14 app:not-affects naics:541514 .
+# inst:F-14 app:not-affects naics:541513 .
+# inst:F-14 schema:name "Fisheries Act" .

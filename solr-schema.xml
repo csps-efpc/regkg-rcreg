@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<!--
+Copyright 2011, 2013, 2014 Hendrik Schnepel
+Copyright 2021, Joshua Turner
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+    http://www.apache.org/licenses/LICENSE-2.0
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+<schema name="solr-minimal" version="1.4">
+    <uniqueKey>id</uniqueKey>
+    <defaultSearchField>text_en</defaultSearchField>
+    <types>
+        <fieldType name="string" class="solr.StrField" />
+        <fieldType name="text_general" class="solr.TextField" positionIncrementGap="100">
+            <analyzer type="index">
+                <tokenizer class="solr.StandardTokenizerFactory"/>
+                <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+                <filter class="solr.LowerCaseFilterFactory"/>
+            </analyzer>
+            <analyzer type="query">
+                <tokenizer class="solr.StandardTokenizerFactory"/>
+                <filter class="solr.StopFilterFactory" ignoreCase="true" words="stopwords.txt" enablePositionIncrements="true" />
+                <filter class="solr.SynonymFilterFactory" synonyms="synonyms.txt" ignoreCase="true" expand="true"/>
+                <filter class="solr.LowerCaseFilterFactory"/>
+            </analyzer>
+        </fieldType>
+    </types>
+    <fields>
+        <field name="id" type="string" indexed="true" stored="true" required="true" />
+        <field name="text_en" type="text_general" indexed="true" stored="true" required="false" />
+        <field name="text_fr" type="text_general" indexed="true" stored="true" required="false" />  
+        <dynamicField name="*" type="string" indexed="true" stored="true" />
+    </fields>
+</schema>

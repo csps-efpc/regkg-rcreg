@@ -1,0 +1,3 @@
+# "Bare" triples in NT can be expressed like:
+# _:subject1 <http://an.example/predicate1> "object1" .
+# _:subject2 <http://an.example/predicate2> "object2" .
