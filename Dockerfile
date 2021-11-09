@@ -9,5 +9,7 @@ COPY pom.xml /home/app
 
 RUN mvn -f /home/app/pom.xml clean install
 
-FROM openjdk:17-alpine
-COPY --from=build /home/app/target/ .
+FROM scratch AS export-stage
+COPY --from=build /home/app/target/out.json ./
+COPY --from=build /home/app/target/out.sqlite3 ./
+COPY --from=build /home/app/target/out.ttl ./
