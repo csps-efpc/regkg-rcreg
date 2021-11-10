@@ -13,4 +13,9 @@ Building this project requires Java 17 and Maven to be on your command line path
 mvn clean install
 ```
 
+Building can be completed with Docker 18.09 as it uses [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/)
+```
+DOCKER_BUILDKIT=1 docker build --file Dockerfile --output target .
+```
+
 Following the build, the output models can be found in `target/out.ttl`, `target/out.sqlite3`, and `target/out.json`.
