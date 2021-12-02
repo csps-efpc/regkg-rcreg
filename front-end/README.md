@@ -10,6 +10,8 @@ To build the project with Docker, use version 18.09 or higher as it uses [BuildK
 
 Run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build the project.
 
+Following the build, the static HTML files will be output in the `build` folder.
+
 ## Setup
 
 Before running the scripts with the project, you must first download the requirements listed in package.json.
