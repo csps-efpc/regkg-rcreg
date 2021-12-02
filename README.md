@@ -25,8 +25,8 @@ Following the build, the output models can be found in `target/out.ttl`, `target
 
 To build the project with Docker, use version 18.09 or higher as it uses [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/)
 
-Run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build the project.
+`cd` into the `front-end` folder then run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build the project.
 
-Following the build, the static HTML files will be output in the build folder.
+Following the build, the static HTML files will be output in the `front-end/build` folder.
 
 For more information on running the front end, see the [Read Me](front-end/README.md).
