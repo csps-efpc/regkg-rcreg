@@ -29,4 +29,4 @@ Run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build
 
 Following the build, the static HTML files will be output in the build folder.
 
-For more information on running the front end, see the [Read Me](front-end/readme.md).
+For more information on running the front end, see the [Read Me](front-end/README.md).
