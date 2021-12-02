@@ -63,8 +63,8 @@ public class RdfGatheringAgent {
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
-    private static final String TEXT_FIELD_ENGLISH = "text_en";
-    private static final String TEXT_FIELD_FRENCH = "text_fr";
+    private static final String TEXT_FIELD_ENGLISH = "text_en_txt";
+    private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
     private static final Charset UTF8 = StandardCharsets.UTF_8;
     private static final String REFERENCE_CHAPTER_MARKER = ", c. ";
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
