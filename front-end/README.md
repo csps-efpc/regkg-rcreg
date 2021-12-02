@@ -8,9 +8,9 @@ This project relies upon [React](https://reactjs.org/) and [NodeJS](https://node
 
 To build the project with Docker, use version 18.09 or higher as it uses [BuildKit](https://docs.docker.com/develop/develop-images/build_enhancements/)
 
-Run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build the project.
+From within this fodler, run `DOCKER_BUILDKIT=1 docker build --file Dockerfile --output build .` to build the project.
 
-Following the build, the static HTML files will be output in the `build` folder.
+Following the build, the static HTML files will be output in the `front-end/build` folder.
 
 ## Setup
 
