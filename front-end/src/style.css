@@ -1,0 +1,32 @@
+.header, .center {
+  text-align: center;
+}
+
+.red{
+  border-width: 2px;
+  border-color: red;
+  border-style: solid;
+}
+
+h1{
+  font-size: 2.9375em;
+  font-style: bold; 
+}
+
+h1, h2{
+  color: #2d3239;
+  font-family: 'Archivo Narrow', sans-serif;
+}
+
+p{
+  color: #434c56;
+  font-size: 1.1875em;
+  font-weight: 400;
+  font-style: normal;
+  font-family: 'Roboto', sans-serif;
+  line-height: 1.5;
+}
+
+.no-underline{
+  text-decoration: none;
+}

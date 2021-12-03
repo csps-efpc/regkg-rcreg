@@ -1,3 +1,17 @@
 /target/
 /metadata.csv
 /regcan.csv
+
+
+# Optional npm cache directory
+/front-end/.npm
+
+# Output of 'npm pack'
+/front-end/*.tgz
+
+# Dependency directories
+/front-end/node_modules/
+/front-end/jspm_packages/
+
+# Build front-end files
+/front-end/build/
