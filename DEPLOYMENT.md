@@ -15,7 +15,7 @@ Execute each command individually.
 sudo apt update
 sudo apt dist-upgrade
 sudo apt install docker.io openjdk-17-jre curl git
-
+```
 
 ### Step 1: SOLR Installation
 
