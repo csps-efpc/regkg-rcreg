@@ -33,8 +33,8 @@ limitations under the License.
     </types>
     <fields>
         <field name="id" type="string" indexed="true" stored="true" required="true" />
-        <field name="text_en" type="text_general" indexed="true" stored="true" required="false" />
-        <field name="text_fr" type="text_general" indexed="true" stored="true" required="false" />  
+        <field name="text_en_txt" type="text_general" indexed="true" stored="true" required="false" />
+        <field name="text_fr_txt" type="text_general" indexed="true" stored="true" required="false" />  
         <dynamicField name="*" type="string" indexed="true" stored="true" />
     </fields>
 </schema>
