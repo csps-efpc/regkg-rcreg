@@ -47,6 +47,7 @@ import org.jdom2.Content;
 import org.jdom2.Document;
 import org.jdom2.Element;
 import org.jdom2.JDOMException;
+import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
@@ -65,6 +66,8 @@ public class RdfGatheringAgent {
             = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
     private static final String TEXT_FIELD_ENGLISH = "text_en_txt";
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
+    private static final String TITLE_FIELD_ENGLISH = "title_en_txt";
+    private static final String TITLE_FIELD_FRENCH = "title_fr_txt";
     private static final Charset UTF8 = StandardCharsets.UTF_8;
     private static final String REFERENCE_CHAPTER_MARKER = ", c. ";
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
@@ -109,19 +112,19 @@ public class RdfGatheringAgent {
 
     public void writeIndexToJson(Model model, Map<String, Map<String, String>> index, String path) throws IOException, NoSuchElementException {
         File targetFile = new File(path);
-        if(targetFile.exists()) {
+        if (targetFile.exists()) {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try(FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
             Iterator<String> it = index.keySet().iterator();
-            while(it.hasNext()) {
+            while (it.hasNext()) {
                 String key = it.next();
                 TreeMap<String, String> value = new TreeMap(index.get(key));
                 value.put("id", key);
                 fos.write(gson.toJson(value).getBytes(UTF8));
-                if(it.hasNext()) {
+                if (it.hasNext()) {
                     fos.write(",".getBytes(UTF8));
                 }
                 fos.write("\n".getBytes(UTF8));
@@ -131,6 +134,7 @@ public class RdfGatheringAgent {
             fos.close();
         }
     }
+
     public void writeModelToSqlite(Model model, String path) throws IOException, NoSuchElementException {
         // Write the given model out to a nicely-packed SQLite db.
         // Setup DDL/SQL is in a test resource called "/ddl.sql"
@@ -335,7 +339,7 @@ public class RdfGatheringAgent {
                 }
             }
             for (Map.Entry<String, String> entry : statutoryInstruments.entrySet()) {
-    //            System.out.println("[" + entry.getKey() + "] " + entry.getValue());
+                //            System.out.println("[" + entry.getKey() + "] " + entry.getValue());
                 if (entry.getKey().startsWith("C.R.C.")
                         || entry.getKey().startsWith("R.S.C._")
                         || entry.getKey().startsWith("R.S._")
@@ -356,15 +360,31 @@ public class RdfGatheringAgent {
     private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
         final Resource amendedReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
 
-                    SAXBuilder builder = new SAXBuilder();
+        SAXBuilder builder = new SAXBuilder();
         final String xmlUrl = "https://laws-lois.justice.gc.ca/eng/XML/" + instrumentId + ".xml";
         System.out.println(xmlUrl);
         Document doc = builder.build(xmlUrl);
+        Namespace limsNamespace = null;
+        for (Namespace ns : doc.getRootElement().getAdditionalNamespaces()) {
+            if (ns.getURI().equals("http://justice.gc.ca/lims")) {
+                limsNamespace = ns;
+            }
+        }
         String text = collectTextFrom(doc.getRootElement()).toString();
         TreeSet<String> amendingRegIds = new TreeSet<>();
         int wordCount = countWordsIn(text);
+        model.add(amendedReg, wordCountProperty, String.valueOf(wordCount));
         int sectionCount = 0;
+        String shortTitle = instrumentId;
         // TODO Numebr of section
+        Element identification = doc.getRootElement().getChild("Identification");
+        if (identification != null) {
+            shortTitle = identification.getChildTextNormalize("ShortTitle");
+            Map<String, String> index = searchIndex.getOrDefault(amendedReg.getURI(), new HashMap<String, String>());
+            index.put(TEXT_FIELD_ENGLISH, collectTextFrom(identification).toString());
+            index.put(TITLE_FIELD_ENGLISH, shortTitle);
+            searchIndex.put(amendedReg.getURI(), index);
+        }
         if (doc.getRootElement().getChild("Body") != null) {
             for (Element section : doc.getRootElement().getChild("Body").getChildren("Section")) {
                 sectionCount++;
@@ -402,6 +422,16 @@ public class RdfGatheringAgent {
                         }
                     }
                 }
+                if (limsNamespace != null) {
+                    String limsId = section.getAttributeValue("id", limsNamespace);
+                    if (limsId != null) {
+                        String sectionURI = amendedReg.getURI() + "#" + limsId;
+                        Map<String, String> sectionindex = searchIndex.getOrDefault(amendedReg.getURI(), new HashMap<String, String>());
+                        sectionindex.put(TEXT_FIELD_ENGLISH, collectTextFrom(section).toString());
+                        sectionindex.put(TITLE_FIELD_ENGLISH, shortTitle);
+                        searchIndex.put(sectionURI, sectionindex);
+                    }
+                }
             }
         }
         for (String amendingRegId : amendingRegIds) {
@@ -409,11 +439,7 @@ public class RdfGatheringAgent {
             model.add(amendedReg, consolidatesProperty, amendingReg);
             model.add(amendingReg, amendsInstrumentProperty, amendedReg);
         }
-        model.add(amendedReg, wordCountProperty, String.valueOf(wordCount));
         model.add(amendedReg, sectionCountProperty, String.valueOf(sectionCount));
-        Map<String, String> index = searchIndex.getOrDefault(amendedReg.getURI(), new HashMap<String, String>());
-        index.put(TEXT_FIELD_ENGLISH, text);
-        searchIndex.put(amendedReg.getURI(), index);
     }
 
     public void fetchAndParseActsAndConsolidatedRegs(Model model, Set<String> knownStatutoryInstruments, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
