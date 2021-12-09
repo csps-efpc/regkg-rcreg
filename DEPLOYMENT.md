@@ -20,10 +20,10 @@ Execute each command individually.
 ```
 sudo apt update
 sudo apt dist-upgrade
-sudo apt install docker.io openjdk-17-jre curl git
+sudo apt install docker.io openjdk-17-jre curl git jetty9
 ```
 
-### Step 1: SOLR Installation
+### Step 1: SOLR, Jena Fuseki, and Jetty Installation
 
 We download a recent buid of Apache SOLR from the ASF, unpack it, and install it 
 as a service. This creates a user named `solr` on the system.
@@ -71,7 +71,7 @@ Environment=JVM_ARGS=-Xmx4G
 ExecStart=/home/fuseki/apache-jena-fuseki-4.2.0/fuseki-server --file /tmp/kgwork/out.ttl /name 
 ```
 
-Finally, update the systemd daemon profiles and enable the fuseki service.
+Next, update the systemd daemon profiles and enable the fuseki service.
 
 ```
 sudo systemctl daemon-reload
@@ -81,6 +81,12 @@ sudo systemctl enable fuseki.service
 Note that the fuseki service will complain that it can't start -- this is normal
 at this stage because we've not yet provided it with a model to serve.
 By default, fuseki listens on port 3030.
+
+Finally, we alter the permissions of the Jetty root so our deploy script can post 
+the GUI there. By default, Jetty serves on port 8080.
+```
+sudo chmod a+w /usr/share/jetty9/webapps/root
+```
 
 ### Step 2: Building and deploying the models
 
@@ -120,11 +126,6 @@ echo "Uploading search index"
 /opt/solr/bin/post -c kg /tmp/kgwork/out.json
 echo "Restarting SPARQL service"
 systemctl restart fuseki.service
-
-# OPTIONAL - if you're looking to deploy the front-end as well, you can deploy 
-# it to a local web server with something like the following. Use a non-standard
-# port! The examples assume that the offset port is 8080)  Otherwise, comment 
-# this out:
 
 echo "Deploying front-end"
 rm -rf /usr/share/jetty9/webapps/root/regkg
