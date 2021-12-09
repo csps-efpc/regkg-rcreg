@@ -5,7 +5,7 @@ import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage, useIntl } from 'react-intl';
 import {Context} from "../components/lang/LanguageWrapper";
 import "../style.css";
 import logo from "../img/logo.svg";
@@ -37,12 +37,25 @@ const Navigation = () => {
     language : <FormattedMessage id = "app.navbar.language" />,
   }
 
+  const ariaTranslations = {
+    title : useIntl().formatMessage({id: "app.navbar.title"}),
+    home : useIntl().formatMessage({id: "app.navbar.home"}),
+    search : useIntl().formatMessage({id: "app.navbar.search"}),
+    about : useIntl().formatMessage({id: "app.navbar.about"}),
+    contact : useIntl().formatMessage({id: "app.navbar.contact"}),
+    language : useIntl().formatMessage({id: "app.navbar.language"}),
+    menuHeader : useIntl().formatMessage({id: "app.navbar.menuHeader"}),
+    menuOption : useIntl().formatMessage({id: "app.navbar.menuOption"}),
+    langToggle : useIntl().formatMessage({id: "app.navbar.langToggle"}),
+  }
+
+  console.log(navbarTranslations.home.intl);
+
   return(
     <Navbar bg="primary" variant="dark" className="">
       <Container>
-        <Navbar.Brand href="#home">
+        <Navbar.Brand aria-label={ariaTranslations.title + " " + ariaTranslations.menuOption} href="#home">
           <img
-            alt="Knowledge Graph"
             src={logo}
             width="30"
             height="30"
@@ -54,14 +67,14 @@ const Navigation = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link href="#home">{navbarTranslations.home}</Nav.Link>
-            <Nav.Link href="#search">{navbarTranslations.search}</Nav.Link>
-            <Nav.Link href="#about">{navbarTranslations.about}</Nav.Link>
-            <Nav.Link href="#contact">{navbarTranslations.contact}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} href="#home">{navbarTranslations.home}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} href="#search">{navbarTranslations.search}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} href="#about">{navbarTranslations.about}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} href="#contact">{navbarTranslations.contact}</Nav.Link>
           </Nav>
         </Navbar.Collapse>
         <Navbar.Collapse className="justify-content-end">
-          <Button className="justify-content-end" variant="light" onClick={() => {toggleLanguage()}}>{navbarTranslations.language}</Button>
+          <Button aria-label={ariaTranslations.language + " " + ariaTranslations.langToggle} className="justify-content-end" variant="light" onClick={() => {toggleLanguage()}}>{navbarTranslations.language}</Button>
         </Navbar.Collapse>
       </Container>
     </Navbar>
