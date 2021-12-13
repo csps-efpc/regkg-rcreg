@@ -13,20 +13,30 @@ import logo from "../img/logo.svg";
 
 const Navigation = () => {
 
-  const [lang, setLang] = useState("en"); 
+  // In the LangWrapper we created a context that exported locale and selectLanguage
+  const context = useContext(Context);
 
-    const toggleLanguage = () => {
-    if(lang == "en"){
-      setLang("fr");
+  // Keep track of what language the navbar is displaying
+  // Set it based on the i18n wrapper language, which currently pulls from the browser
+  const [navbarLang, setNavbarLang] = useState(context.locale); 
+
+  /*
+    Function: toggleLanguage
+    Purpose: Toggle the navBar language between two values
+
+    Since we are only providing two i18n we can toggle these values.
+    If we have more translations then this should be a direct setting
+  */
+  const toggleLanguage = () => {
+    if(navbarLang == "en"){
+      setNavbarLang("fr");
       context.selectLanguage("fr");
     }
     else{
-      setLang("en");
+      setNavbarLang("en");
       context.selectLanguage("en");
     }
   }
-
-  const context = useContext(Context);
 
   const navbarTranslations = {
     title : <FormattedMessage id = "app.navbar.title" />,
@@ -49,12 +59,10 @@ const Navigation = () => {
     langToggle : useIntl().formatMessage({id: "app.navbar.langToggle"}),
   }
 
-  console.log(navbarTranslations.home.intl);
-
   return(
     <Navbar bg="primary" variant="dark" className="">
       <Container>
-        <Navbar.Brand aria-label={ariaTranslations.title + " " + ariaTranslations.menuOption} href="#home">
+        <Navbar.Brand aria-label={ariaTranslations.title + " " + ariaTranslations.menuOption} href="/">
           <img
             src={logo}
             width="30"
@@ -67,10 +75,10 @@ const Navigation = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} href="#home">{navbarTranslations.home}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} href="#search">{navbarTranslations.search}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} href="#about">{navbarTranslations.about}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} href="#contact">{navbarTranslations.contact}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.home}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} href="search">{navbarTranslations.search}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.about}</Nav.Link>
+            <Nav.Link aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.contact}</Nav.Link>
           </Nav>
         </Navbar.Collapse>
         <Navbar.Collapse className="justify-content-end">
