@@ -1,4 +1,5 @@
 /target/
+/laws-lois-xml/
 /metadata.csv
 /regcan.csv
 
@@ -15,3 +16,6 @@
 
 # Build front-end files
 /front-end/build/
+
+# Front-end outputs
+/front-end/target/
