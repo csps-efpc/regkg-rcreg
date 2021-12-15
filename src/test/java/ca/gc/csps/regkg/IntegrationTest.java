@@ -1,5 +1,6 @@
 package ca.gc.csps.regkg;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Map;
@@ -32,6 +33,7 @@ public class IntegrationTest {
         // framework. Mutable shared state because of the accursed streams 
         // framework in the file tree walker.
         MutableBoolean pass = new MutableBoolean(true);
+        File gitDir = new File("." + File.separator + "laws-lois-xml");
         Set<String> knownStatutoryInstruments = new TreeSet<>();
         System.err.println();
         // This is the MapDB instance for storing the attribute sets collected 
@@ -55,6 +57,9 @@ public class IntegrationTest {
         // Add local facts and prefixes to the model.
         agent.fetchAndParseLocalTurtle(model, pass);
 
+        // Try to pull the latest Acts & Regs from GitHub
+        agent.cacheActsAndRegsFromGitHub(gitDir);
+
         agent.fetchAndParseStatutoryInstruments(model, knownStatutoryInstruments);
 
         // Add local facts and prefixes to the model.
@@ -64,14 +69,14 @@ public class IntegrationTest {
         agent.fetchAndParseRias(model, knownStatutoryInstruments);
 
         // Add the acts and regs facts to the model.
-        agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex);
+        agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex, gitDir);
         // Add the acts and regs facts to the model.
         agent.fetchAndParseMetadata(model);
         Assertions.assertTrue(pass.getValue(), "RDF parsing errors occurred.");
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }

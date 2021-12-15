@@ -43,6 +43,8 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.system.ErrorHandler;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jdom2.Content;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -357,13 +359,40 @@ public class RdfGatheringAgent {
         }
     }
 
-    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
+    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
         final Resource amendedReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
-
         SAXBuilder builder = new SAXBuilder();
-        final String xmlUrl = "https://laws-lois.justice.gc.ca/eng/XML/" + instrumentId + ".xml";
-        System.out.println(xmlUrl);
-        Document doc = builder.build(xmlUrl);
+        // The following set of checks and fallbacks is there to address the 
+        // case where the published legis.xml documet is out of sync with the 
+        // GitHub contents, or where the GitHub content is 
+        // truncated/faulty/whatever
+        File gitFile = null;
+        if (gitDir != null) {
+            File eng = new File(gitDir, "eng");
+            File acts = new File(eng, "acts");
+            File regs = new File(eng, "regulations");
+            if (new File(acts, instrumentId + ".xml").exists()) {
+                gitFile = new File(acts, instrumentId + ".xml");
+            } else if (new File(regs, instrumentId + ".xml").exists()) {
+                gitFile = new File(regs, instrumentId + ".xml");
+            }
+        }
+        Document doc = null;
+        if (gitFile != null) {
+            try {
+                System.out.println(gitFile.getPath());
+                doc = builder.build(gitFile);
+            } catch (IOException | JDOMException ex) {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.WARNING, "Failed to parse " + gitFile.getPath(), ex);
+            }
+        }
+        if (doc == null) {
+            final String xmlUrl = "https://laws-lois.justice.gc.ca/eng/XML/" + instrumentId + ".xml";
+            System.out.println(xmlUrl);
+            doc = builder.build(xmlUrl);
+        }
+        // At this point we either have the document, or have thrown an exception.
         Namespace limsNamespace = null;
         for (Namespace ns : doc.getRootElement().getAdditionalNamespaces()) {
             if (ns.getURI().equals("http://justice.gc.ca/lims")) {
@@ -376,7 +405,6 @@ public class RdfGatheringAgent {
         model.add(amendedReg, wordCountProperty, String.valueOf(wordCount));
         int sectionCount = 0;
         String shortTitle = instrumentId;
-        // TODO Numebr of section
         Element identification = doc.getRootElement().getChild("Identification");
         if (identification != null) {
             shortTitle = identification.getChildTextNormalize("ShortTitle");
@@ -442,7 +470,29 @@ public class RdfGatheringAgent {
         model.add(amendedReg, sectionCountProperty, String.valueOf(sectionCount));
     }
 
-    public void fetchAndParseActsAndConsolidatedRegs(Model model, Set<String> knownStatutoryInstruments, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
+    public void cacheActsAndRegsFromGitHub(File gitDir) throws IOException {
+        //Use Git to fetch the latest from Justice.
+        try {
+            if (gitDir.exists()) {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.INFO, "Local copy of Acts & Regs found, refreshing changes from GitHub.");
+                Git git = Git.open(gitDir);
+                git.pull().call();
+            } else {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.INFO, "No local copy of Acts & Regs found, cloning from GitHub.");
+                Git.cloneRepository()
+                        .setURI("https://github.com/justicecanada/laws-lois-xml.git")
+                        .setDirectory(gitDir)
+                        .call();
+            }
+        } catch (GitAPIException gitAPIException) {
+            Logger.getLogger(RdfGatheringAgent.class
+                    .getName()).log(Level.WARNING, "Failed to retrieve consolidated acts and regs from GitHub. Slow HTTP retrieval will be used instead.", gitAPIException);
+        }
+    }
+
+    public void fetchAndParseActsAndConsolidatedRegs(Model model, Set<String> knownStatutoryInstruments, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
         SAXBuilder builder = new SAXBuilder();
         Document doc = builder.build(LEGIS_URL);
         Element actsRegList = doc.getRootElement();
@@ -516,7 +566,7 @@ public class RdfGatheringAgent {
             }
         }
         for (String statutoryInstrumentId : statutoryInstrumentIds) {
-            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex);
+            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex, gitDir);
         }
         for (Map.Entry<String, String> entry : unknownStatutoryInstrumentIds.entrySet()) {
             System.out.println("Unknown Statutory Instrument ID: " + entry.getKey() + " from " + entry.getValue());
