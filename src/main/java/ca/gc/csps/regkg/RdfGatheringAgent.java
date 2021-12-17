@@ -604,17 +604,6 @@ public class RdfGatheringAgent {
                 final String url = actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html");
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
-//                attributes.put("currentToDate", actElement.getChildTextTrim("CurrentToDate"));
-//                if (actElement.getChild("RegsMadeUnderAct") != null) {
-//                    for (Element reg : actElement.getChild("RegsMadeUnderAct").getChildren("Reg")) {
-//                        String regUniqueId = regIdToUniqueId.get(reg.getAttributeValue("idRef"));
-//                        Map<String, String> regAttributes = regIdToAttributes.get(regUniqueId);
-//                        model.add(ResourceFactory.createResource(regAttributes.get("instrumentURI")), enablingActProperty,
-//                                ResourceFactory.createResource(attributes.get("instrumentURI")));
-//                        model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), enablesRegProperty,
-//                                ResourceFactory.createResource(regAttributes.get("instrumentURI")));
-//                    }
-//                }
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
                         actElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
@@ -629,7 +618,7 @@ public class RdfGatheringAgent {
             fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex, gitDir);
         }
         for (Map.Entry<String, String> entry : unknownStatutoryInstrumentIds.entrySet()) {
-            System.out.println("Unknown Statutory Instrument ID: " + entry.getKey() + " from " + entry.getValue());
+            System.out.println("Unknown Statutory Instrument ID: [" + entry.getKey() + "] from \"" + entry.getValue() + "\"");
         }
         System.out.println("Number of Unknown Statutory Instruments references: " + unknownStatutoryInstrumentIds.size());
         Logger.getLogger(RdfGatheringAgent.class
@@ -691,7 +680,7 @@ public class RdfGatheringAgent {
         final String linkFieldName = lang.equals("fr") ? LINK_FIELD_FRENCH : LINK_FIELD_ENGLISH;
         String text = collectTextFrom(engDoc.getRootElement()).toString();
         int wordCount = countWordsIn(text);
-        model.add(instrumentURI, wordCountProperty, String.valueOf(wordCount));
+        model.add(instrumentURI, wordCountProperty, String.valueOf(wordCount), lang);
         String shortTitle = instrumentId;
         Element identification = engDoc.getRootElement().getChild("Identification");
         if (identification != null) {
