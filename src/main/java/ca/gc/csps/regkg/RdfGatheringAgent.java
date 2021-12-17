@@ -43,6 +43,8 @@ import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.RDFParser;
 import org.apache.jena.riot.system.ErrorHandler;
+import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jdom2.Content;
 import org.jdom2.Document;
 import org.jdom2.Element;
@@ -68,12 +70,15 @@ public class RdfGatheringAgent {
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
     private static final String TITLE_FIELD_ENGLISH = "title_en_txt";
     private static final String TITLE_FIELD_FRENCH = "title_fr_txt";
+    private static final String LINK_FIELD_ENGLISH = "url_en_str";
+    private static final String LINK_FIELD_FRENCH = "url_fr_str";
     private static final Charset UTF8 = StandardCharsets.UTF_8;
     private static final String REFERENCE_CHAPTER_MARKER = ", c. ";
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
     private static final String REFERENCE_SECTIONS_MARKER = ", ss. ";
 
     // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
+    final PropertyImpl statutoryInstrumentIdProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/instrument-id");
     final PropertyImpl sponsorProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/sponsor");
     final PropertyImpl consultationWordCountProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/consultation-word-count");
     final PropertyImpl wordCountProperty = new PropertyImpl("https://schema.org/wordCount");
@@ -292,7 +297,7 @@ public class RdfGatheringAgent {
             for (String section : sections) {
                 URL u = new URL(CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL.replace("?", section));
                 Logger.getLogger(RdfGatheringAgent.class
-                        .getName()).log(Level.INFO, "Fetching " + u.toExternalForm());
+                        .getName()).log(Level.INFO, "Fetching {0}", u.toExternalForm());
                 try {
                     org.jsoup.nodes.Document doc = Jsoup.parse(u, 10000);
                     Elements h2 = doc.body().select("h2");
@@ -357,36 +362,31 @@ public class RdfGatheringAgent {
         }
     }
 
-    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
-        final Resource amendedReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
-
+    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
+        final Resource instrumentURI = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
         SAXBuilder builder = new SAXBuilder();
-        final String xmlUrl = "https://laws-lois.justice.gc.ca/eng/XML/" + instrumentId + ".xml";
-        System.out.println(xmlUrl);
-        Document doc = builder.build(xmlUrl);
-        Namespace limsNamespace = null;
-        for (Namespace ns : doc.getRootElement().getAdditionalNamespaces()) {
-            if (ns.getURI().equals("http://justice.gc.ca/lims")) {
-                limsNamespace = ns;
-            }
+        Document engDoc = fetchDoc(gitDir, instrumentId, builder, "eng");
+        String frenchId = toUrlSafeId(model.getProperty(instrumentURI, statutoryInstrumentIdProperty, "fr").getString());
+        Document fraDoc = fetchDoc(gitDir, frenchId, builder, "fra");
+
+        // At this point we either have the documents, or have thrown an exception.
+        String enUrl = null;
+        org.apache.jena.rdf.model.Statement enUrlProperty = model.getProperty(instrumentURI, urlProperty, "en");
+        if (enUrlProperty != null) {
+            enUrl = enUrlProperty.getString();
         }
-        String text = collectTextFrom(doc.getRootElement()).toString();
-        TreeSet<String> amendingRegIds = new TreeSet<>();
-        int wordCount = countWordsIn(text);
-        model.add(amendedReg, wordCountProperty, String.valueOf(wordCount));
+        String frUrl = null;
+        org.apache.jena.rdf.model.Statement frUrlProperty = model.getProperty(instrumentURI, urlProperty, "fr");
+        if (frUrlProperty != null) {
+            frUrl = frUrlProperty.getString();
+        }
         int sectionCount = 0;
-        String shortTitle = instrumentId;
-        // TODO Numebr of section
-        Element identification = doc.getRootElement().getChild("Identification");
-        if (identification != null) {
-            shortTitle = identification.getChildTextNormalize("ShortTitle");
-            Map<String, String> index = searchIndex.getOrDefault(amendedReg.getURI(), new HashMap<String, String>());
-            index.put(TEXT_FIELD_ENGLISH, collectTextFrom(identification).toString());
-            index.put(TITLE_FIELD_ENGLISH, shortTitle);
-            searchIndex.put(amendedReg.getURI(), index);
-        }
-        if (doc.getRootElement().getChild("Body") != null) {
-            for (Element section : doc.getRootElement().getChild("Body").getChildren("Section")) {
+
+        indexConsolidatedInstrument(engDoc, model, instrumentURI, instrumentId, searchIndex, "en", enUrl);
+        indexConsolidatedInstrument(fraDoc, model, instrumentURI, frenchId, searchIndex, "fr", frUrl);
+        TreeSet<String> amendingRegIds = new TreeSet<>();
+        if (engDoc.getRootElement().getChild("Body") != null) {
+            for (Element section : engDoc.getRootElement().getChild("Body").getChildren("Section")) {
                 sectionCount++;
                 for (Element historicalNote : section.getChildren("HistoricalNote")) {
                     for (Element historicalNoteSubItem : historicalNote.getChildren("HistoricalNoteSubItem")) {
@@ -422,27 +422,89 @@ public class RdfGatheringAgent {
                         }
                     }
                 }
-                if (limsNamespace != null) {
-                    String limsId = section.getAttributeValue("id", limsNamespace);
-                    if (limsId != null) {
-                        String sectionURI = amendedReg.getURI() + "#" + limsId;
-                        Map<String, String> sectionindex = searchIndex.getOrDefault(amendedReg.getURI(), new HashMap<String, String>());
-                        sectionindex.put(TEXT_FIELD_ENGLISH, collectTextFrom(section).toString());
-                        sectionindex.put(TITLE_FIELD_ENGLISH, shortTitle);
-                        searchIndex.put(sectionURI, sectionindex);
-                    }
-                }
             }
         }
         for (String amendingRegId : amendingRegIds) {
             final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + amendingRegId);
-            model.add(amendedReg, consolidatesProperty, amendingReg);
-            model.add(amendingReg, amendsInstrumentProperty, amendedReg);
+            model.add(instrumentURI, consolidatesProperty, amendingReg);
+            model.add(amendingReg, amendsInstrumentProperty, instrumentURI);
         }
-        model.add(amendedReg, sectionCountProperty, String.valueOf(sectionCount));
+        model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
     }
 
-    public void fetchAndParseActsAndConsolidatedRegs(Model model, Set<String> knownStatutoryInstruments, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
+    private Document fetchDoc(File gitDir, String instrumentId, SAXBuilder builder, String lang) throws IOException, JDOMException {
+        // The following set of checks and fallbacks is there to address the
+        // case where the published legis.xml document is out of sync with the
+        // GitHub contents, or where the GitHub content is
+        // truncated/faulty/whatever
+        File gitFile = null;
+        if (gitDir != null) {
+            File langFile = new File(gitDir, lang);
+            File acts = new File(langFile, (lang.equals("fra") ? "lois" : "acts"));
+            File regs = new File(langFile, (lang.equals("fra") ? "reglements" : "regulations"));
+            if (new File(acts, instrumentId + ".xml").exists()) {
+                gitFile = new File(acts, instrumentId + ".xml");
+            } else if (new File(regs, instrumentId + ".xml").exists()) {
+                gitFile = new File(regs, instrumentId + ".xml");
+            }
+        }
+        Document doc = null;
+        if (gitFile != null) {
+            try {
+                System.out.println(gitFile.getPath());
+                doc = builder.build(gitFile);
+            } catch (IOException | JDOMException ex) {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.WARNING, "Failed to parse " + gitFile.getPath(), ex);
+            }
+        }
+        if (doc == null) {
+            final String xmlUrl = "https://laws-lois.justice.gc.ca/" + lang + "/XML/" + instrumentId + ".xml";
+            System.out.println(xmlUrl);
+            doc = builder.build(xmlUrl);
+        }
+        return doc;
+    }
+
+    private void addLimsSectionToIndex(Namespace limsNamespace, Element section, final Resource instrumentURI, Map<String, Map<String, String>> searchIndex, String textField, String titleField, String shortTitle, String urlString, String linkField) {
+        if (limsNamespace != null) {
+            String limsId = section.getAttributeValue("id", limsNamespace);
+            if (limsId != null) {
+                String sectionURI = instrumentURI.getURI() + "#" + limsId;
+                Map<String, String> sectionindex = searchIndex.getOrDefault(sectionURI, new HashMap<String, String>());
+                sectionindex.put(textField, collectTextFrom(section).toString());
+                sectionindex.put(titleField, shortTitle);
+                if (urlString != null) {
+                    sectionindex.put(linkField, urlString + "#" + limsId);
+                }
+                searchIndex.put(sectionURI, sectionindex);
+            }
+        }
+    }
+
+    public void cacheActsAndRegsFromGitHub(File gitDir) throws IOException {
+        //Use Git to fetch the latest from Justice.
+        try {
+            if (gitDir.exists()) {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.INFO, "Local copy of Acts & Regs found, refreshing changes from GitHub.");
+                Git git = Git.open(gitDir);
+                git.pull().call();
+            } else {
+                Logger.getLogger(RdfGatheringAgent.class
+                        .getName()).log(Level.INFO, "No local copy of Acts & Regs found, cloning from GitHub.");
+                Git.cloneRepository()
+                        .setURI("https://github.com/justicecanada/laws-lois-xml.git")
+                        .setDirectory(gitDir)
+                        .call();
+            }
+        } catch (GitAPIException gitAPIException) {
+            Logger.getLogger(RdfGatheringAgent.class
+                    .getName()).log(Level.WARNING, "Failed to retrieve consolidated acts and regs from GitHub. Slow HTTP retrieval will be used instead.", gitAPIException);
+        }
+    }
+
+    public void fetchAndParseActsAndConsolidatedRegs(Model model, Set<String> knownStatutoryInstruments, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
         SAXBuilder builder = new SAXBuilder();
         Document doc = builder.build(LEGIS_URL);
         Element actsRegList = doc.getRootElement();
@@ -456,6 +518,8 @@ public class RdfGatheringAgent {
                 .getName()).log(Level.INFO, "Regulations: {0}", regList.size());
         int englishActCount = 0;
         int englishRegCount = 0;
+        int frenchActCount = 0;
+        int frenchRegCount = 0;
         Map<String, String> regIdToUniqueId = new HashMap<>();
         Map<String, Map<String, String>> actIdToAttributes = new HashMap<>();
         Map<String, Map<String, String>> regIdToAttributes = new HashMap<>();
@@ -463,38 +527,59 @@ public class RdfGatheringAgent {
         TreeMap<String, String> unknownStatutoryInstrumentIds = new TreeMap<>();
         //Map the XML reference ids to the actual unique ID for each.
         for (Element regElement : regList) {
-            final String uniqueId = regElement.getChildTextTrim("UniqueId");
             final String language = regElement.getChildText("Language").substring(0, 2);
-            if (!regIdToAttributes.containsKey(uniqueId)) {
-                regIdToAttributes.put(uniqueId, new HashMap<>());
-            }
-            Map<String, String> attributes = regIdToAttributes.get(uniqueId);
             if (language.equals("en")) {
+                final String uniqueId = regElement.getChildTextTrim("UniqueId");
+                if (!regIdToAttributes.containsKey(uniqueId)) {
+                    regIdToAttributes.put(uniqueId, new HashMap<>());
+                }
+                Map<String, String> attributes = regIdToAttributes.get(uniqueId);
                 englishRegCount++;
-                regIdToUniqueId.put(regElement.getAttributeValue("id"), regElement.getChildText("UniqueId"));
-                regIdToUniqueId.put(regElement.getAttributeValue("olid"), regElement.getChildText("UniqueId"));
-                attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(regElement.getChildTextTrim("UniqueId")));
+                final String url = regElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "FullText.html");
+                regIdToUniqueId.put(regElement.getAttributeValue("id"), uniqueId);
+                regIdToUniqueId.put(regElement.getAttributeValue("olid"), uniqueId);
+                attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(uniqueId));
                 attributes.put("currentToDate", regElement.getChildTextTrim("CurrentToDate"));
+                // The following two properties are language dependent -- we should do the same for French
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
+                        url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                        uniqueId, language);
+                statutoryInstrumentIds.add(uniqueId);
+                knownStatutoryInstruments.add(uniqueId);
+            } else if (language.equals("fr")) {
+                frenchRegCount++;
+                final String url = regElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html");
+                final String uniqueId = regIdToUniqueId.get(regElement.getAttributeValue("id"));
+                if (!regIdToAttributes.containsKey(uniqueId)) {
+                    regIdToAttributes.put(uniqueId, new HashMap<>());
+                }
+                Map<String, String> attributes = regIdToAttributes.get(uniqueId);
+//                attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(regElement.getChildTextTrim("UniqueId")));
+//                attributes.put("currentToDate", regElement.getChildTextTrim("CurrentToDate"));
                 // The following two properties are language dependent -- we should do the same for French
 //                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
 //                        regElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
-                        regElement.getChildTextTrim("LinkToHTMLToC"), language);
-                statutoryInstrumentIds.add(uniqueId);
-                knownStatutoryInstruments.add(uniqueId);
+                        url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                        regElement.getChildTextTrim("UniqueId"), language);
             }
         }
-
         for (Element actElement : actList) {
-            final String uniqueId = actElement.getChildTextTrim("UniqueId");
             final String language = actElement.getChildText("Language").substring(0, 2);
+            final String uniqueId = actElement.getChildTextTrim("UniqueId");
             if (!actIdToAttributes.containsKey(uniqueId)) {
                 actIdToAttributes.put(uniqueId, new HashMap<>());
             }
+
             Map<String, String> attributes = actIdToAttributes.get(uniqueId);
             if (language.equals("en")) {
                 englishActCount++;
+                final String url = actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "FullText.html");
                 attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(actElement.getChildTextTrim("UniqueId")));
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
+                        url, language);
                 attributes.put("currentToDate", actElement.getChildTextTrim("CurrentToDate"));
                 if (actElement.getChild("RegsMadeUnderAct") != null) {
                     for (Element reg : actElement.getChild("RegsMadeUnderAct").getChildren("Reg")) {
@@ -506,26 +591,44 @@ public class RdfGatheringAgent {
                                 ResourceFactory.createResource(regAttributes.get("instrumentURI")));
                     }
                 }
-                // The following two properties are language dependent -- we should do the same for French
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
                         actElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
-                        actElement.getChildTextTrim("LinkToHTMLToC").replace("/index.html", ""), language);
+                        actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "FullText.html"), language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                        uniqueId, language);
+                statutoryInstrumentIds.add(uniqueId);
+                knownStatutoryInstruments.add(uniqueId);
+            } else if (language.equals("fr")) {
+                frenchActCount++;
+                final String url = actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html");
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
+                        url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
+                        actElement.getChildTextTrim("Title"), language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
+                        actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html"), language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                        actElement.getChildTextTrim("UniqueId"), language);
                 statutoryInstrumentIds.add(uniqueId);
                 knownStatutoryInstruments.add(uniqueId);
             }
         }
         for (String statutoryInstrumentId : statutoryInstrumentIds) {
-            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex);
+            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex, gitDir);
         }
         for (Map.Entry<String, String> entry : unknownStatutoryInstrumentIds.entrySet()) {
-            System.out.println("Unknown Statutory Instrument ID: " + entry.getKey() + " from " + entry.getValue());
+            System.out.println("Unknown Statutory Instrument ID: [" + entry.getKey() + "] from \"" + entry.getValue() + "\"");
         }
         System.out.println("Number of Unknown Statutory Instruments references: " + unknownStatutoryInstrumentIds.size());
         Logger.getLogger(RdfGatheringAgent.class
                 .getName()).log(Level.INFO, "English Acts: {0}", englishActCount);
         Logger.getLogger(RdfGatheringAgent.class
                 .getName()).log(Level.INFO, "English Regulations: {0}", englishRegCount);
+        Logger.getLogger(RdfGatheringAgent.class
+                .getName()).log(Level.INFO, "French Acts: {0}", frenchActCount);
+        Logger.getLogger(RdfGatheringAgent.class
+                .getName()).log(Level.INFO, "French Regulations: {0}", frenchRegCount);
     }
 
     private String toUrlSafeId(String item) {
@@ -563,6 +666,38 @@ public class RdfGatheringAgent {
 
         String[] words = text.split("\\W+");
         return words.length;
+    }
+
+    private void indexConsolidatedInstrument(Document engDoc, Model model, Resource instrumentURI, String instrumentId, Map<String, Map<String, String>> searchIndex, String lang, String url) {
+        Namespace limsNamespace = null;
+        for (Namespace ns : engDoc.getRootElement().getAdditionalNamespaces()) {
+            if (ns.getURI().equals("http://justice.gc.ca/lims")) {
+                limsNamespace = ns;
+            }
+        }
+        final String textFieldName = lang.equals("fr") ? TEXT_FIELD_FRENCH : TEXT_FIELD_ENGLISH;
+        final String titleFieldName = lang.equals("fr") ? TITLE_FIELD_FRENCH : TITLE_FIELD_ENGLISH;
+        final String linkFieldName = lang.equals("fr") ? LINK_FIELD_FRENCH : LINK_FIELD_ENGLISH;
+        String text = collectTextFrom(engDoc.getRootElement()).toString();
+        int wordCount = countWordsIn(text);
+        model.add(instrumentURI, wordCountProperty, String.valueOf(wordCount), lang);
+        String shortTitle = instrumentId;
+        Element identification = engDoc.getRootElement().getChild("Identification");
+        if (identification != null) {
+            shortTitle = identification.getChildTextNormalize("ShortTitle");
+            Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<String, String>());
+            index.put(textFieldName, collectTextFrom(identification).toString());
+            index.put(titleFieldName, shortTitle);
+            if (url != null) {
+                index.put(linkFieldName, url);
+            }
+            searchIndex.put(instrumentURI.getURI(), index);
+        }
+        if (engDoc.getRootElement().getChild("Body") != null) {
+            for (Element section : engDoc.getRootElement().getChild("Body").getChildren("Section")) {
+                addLimsSectionToIndex(limsNamespace, section, instrumentURI, searchIndex, textFieldName, titleFieldName, shortTitle, url, linkFieldName);
+            }
+        }
     }
 
     private class RdfParsingErrorHandler implements ErrorHandler {
