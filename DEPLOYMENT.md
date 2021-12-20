@@ -29,7 +29,7 @@ We download a recent buid of Apache SOLR from the ASF, unpack it, and install it
 as a service. This creates a user named `solr` on the system.
 
 ```
-export SOLR_VER="8.11.0"
+export SOLR_VER="8.11.1"
 curl -O https://downloads.apache.org/lucene/solr/${SOLR_VER}/solr-${SOLR_VER}.tgz
 tar -xzvf solr-${SOLR_VER}.tgz
 sudo solr-${SOLR_VER}/bin/install_solr_service.sh ./solr-${SOLR_VER}.tgz
@@ -48,10 +48,10 @@ quite as nice a service installer so we have to do a few more steps by hand:
 sudo adduser fuseki
 cd /home/fuseki
 sudo -u fuseki bash
-wget "https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.2.0.tar.gz"
-tar -xzvf apache-jena-fuseki-4.2.0.tar.gz
+wget "https://dlcdn.apache.org/jena/binaries/apache-jena-fuseki-4.3.2.tar.gz"
+tar -xzvf apache-jena-fuseki-4.3.2.tar.gz
 exit
-sudo cp apache-jena-fuseki-4.2.0/fuseki.service /etc/systemd/system/fuseki.service 
+sudo cp apache-jena-fuseki-4.3.2/fuseki.service /etc/systemd/system/fuseki.service 
 ```
 
 Now, as root (or via sudo) edit /etc/systemd/system/fuseki.service so that the 
@@ -63,12 +63,12 @@ Description=Fuseki
 
 [Service]
 # Edit environment variables to match your installation
-Environment=FUSEKI_HOME=/home/fuseki/apache-jena-fuseki-4.2.0
-Environment=FUSEKI_BASE=/home/fuseki/apache-jena-fuseki-4.2.0
+Environment=FUSEKI_HOME=/home/fuseki/apache-jena-fuseki-4.3.2
+Environment=FUSEKI_BASE=/home/fuseki/apache-jena-fuseki-4.3.2
 # Edit the line below to adjust the amount of memory allocated to Fuseki
 Environment=JVM_ARGS=-Xmx4G
 # Edit to match your installation
-ExecStart=/home/fuseki/apache-jena-fuseki-4.2.0/fuseki-server --file /tmp/kgwork/out.ttl /name 
+ExecStart=/home/fuseki/apache-jena-fuseki-4.3.2/fuseki-server --file /tmp/kgwork/out.ttl /name 
 ```
 
 Next, update the systemd daemon profiles and enable the fuseki service.
