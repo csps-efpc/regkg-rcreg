@@ -19,6 +19,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +61,6 @@ import org.jsoup.select.Elements;
  */
 public class RdfGatheringAgent {
 
-    public static final String BASE_URL = "http://handshape.com/rdf/";
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
@@ -95,27 +95,46 @@ public class RdfGatheringAgent {
     final PropertyImpl departmentHeadProperty = new PropertyImpl("https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head");
     final PropertyImpl metadataLabelProperty = new PropertyImpl("https://www.csps-efpc.gc.ca/ext/instrument-references");
 
-    public void fetchAndParseLocalTurtle(Model model, MutableBoolean pass) throws IOException {
+    /**
+     * Recursively read turtle files into the given model.
+     *
+     * @param root the file path frm which to start searching for .ttl and .nt
+     * files
+     * @param model the RDF model into which triples and namespaces should be
+     * inserted
+     * @throws IOException if an error occurs while recursing and reading.
+     * @return true if all files were successfully parsed and no unknown files
+     * were discovered.
+     */
+    public boolean fetchAndParseLocalTurtle(File root, Model model) throws IOException {
+        MutableBoolean pass = new MutableBoolean(true);
         // Iterate through the "rdf" directory for turtle files.
         // Manually-coded facts and shorthand prefixes can be declared in the turtle.
-        File root = new File("rdf");
 
         Files.walk(root.toPath()).filter(path -> Files.exists(path, LinkOption.NOFOLLOW_LINKS)).filter(path -> path.toFile().isFile()).forEach(path -> {
             ErrorHandler handler = new RdfParsingErrorHandler(pass, path);
             switch (FilenameUtils.getExtension(path.toString())) {
-                case "ttl":
-                case "nt":
+                case "ttl", "nt" ->
                     RDFParser.source(path).checking(true).errorHandler(handler).build().parse(model);
-                    break;
-                default:
+                default -> {
                     System.err.println("ERROR: Unexpected file extension at " + path);
                     pass.setFalse();
-                    break;
+                }
+
             }
         });
+        return pass.isTrue();
     }
 
-    public void writeIndexToJson(Model model, Map<String, Map<String, String>> index, String path) throws IOException, NoSuchElementException {
+    /**
+     * Writes the given index into a JSON file at the given path. If an existing
+     * is found, it is deleted.
+     *
+     * @param index the index to write
+     * @param path the file path to which the JSON should be written
+     * @throws IOException if any part of the write operation fails.
+     */
+    public void writeIndexToJson(Map<String, Map<String, String>> index, String path) throws IOException {
         File targetFile = new File(path);
         if (targetFile.exists()) {
             Files.delete(targetFile.toPath());
@@ -140,10 +159,18 @@ public class RdfGatheringAgent {
         }
     }
 
-    public void writeModelToSqlite(Model model, String path) throws IOException, NoSuchElementException {
+    /**
+     * Writes the given RDF model out to a SQLite3 database. URI values are
+     * written in RDF short-form.
+     *
+     * @param model the model to write.
+     * @param path the file path to which the model should be written.
+     * @throws IOException if the writing of the model to disk fails.
+     */
+    public void writeModelToSqlite(Model model, String path) throws IOException {
         // Write the given model out to a nicely-packed SQLite db.
-        // Setup DDL/SQL is in a test resource called "/ddl.sql"
-        // Optimization is in a test resource called "finalize.sql"
+        // Setup DDL/SQL is pulled from a resource called "/ddl.sql"
+        // Optimization is pulled from a resource called "finalize.sql"
         try {
             Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path);
             try (Statement stmt = conn.createStatement()) {
@@ -208,7 +235,15 @@ public class RdfGatheringAgent {
         }
     }
 
-    public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
+    /**
+     * Read the list of federal departments from a CSV document, convert the
+     * tuples to triples, and insert them into the RDF model and a search index.
+     *
+     * @param model the RDF model into which the departments should be added.
+     * @param searchIndex the index into which to add the departments
+     * @throws IOException
+     */
+    public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws IOException {
         FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8);
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
         for (CSVRecord record : records) {
@@ -290,7 +325,20 @@ public class RdfGatheringAgent {
         }
     }
 
-    public void fetchAndParseStatutoryInstruments(Model model, Set<String> knownStatutoryInstrumentIds) throws JDOMException, IOException {
+    /**
+     * Insert the Consolidated Index of Statutory Instruments from the Canada
+     * Gazette into the given model.
+     *
+     * @param model The RDF model into which the triples should be added.
+     * @return the set of statutory instrument IDs discovered during the
+     * insertion operation.
+     * @throws JDOMException if the published index at the Canada Gazette cannot
+     * be parsed.
+     * @throws IOException if the connection to the Canada Gazette cannot be
+     * established.
+     */
+    public Set<String> fetchAndParseStatutoryInstruments(Model model) throws JDOMException, IOException {
+        Set<String> knownStatutoryInstrumentIds = new HashSet<>();
         try {
             Map<String, String> statutoryInstruments = new TreeMap<>();
             String[] sections = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,other-autre".split(",");
@@ -360,6 +408,7 @@ public class RdfGatheringAgent {
             e.printStackTrace();
             throw new IOException(e);
         }
+        return knownStatutoryInstrumentIds;
     }
 
     private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {

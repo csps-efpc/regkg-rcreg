@@ -32,7 +32,6 @@ public class IntegrationTest {
         // MutableBoolean that serves as a flag of the "pass" state to the test 
         // framework. Mutable shared state because of the accursed streams 
         // framework in the file tree walker.
-        MutableBoolean pass = new MutableBoolean(true);
         File gitDir = new File("." + File.separator + "laws-lois-xml");
         Set<String> knownStatutoryInstruments = new TreeSet<>();
         System.err.println();
@@ -55,12 +54,12 @@ public class IntegrationTest {
         Model model = ModelFactory.createDefaultModel();
         RdfGatheringAgent agent = new RdfGatheringAgent();
         // Add local facts and prefixes to the model.
-        agent.fetchAndParseLocalTurtle(model, pass);
+        boolean pass = agent.fetchAndParseLocalTurtle(new File("rdf"), model);
 
         // Try to pull the latest Acts & Regs from GitHub
         agent.cacheActsAndRegsFromGitHub(gitDir);
 
-        agent.fetchAndParseStatutoryInstruments(model, knownStatutoryInstruments);
+        knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
         // Add local facts and prefixes to the model.
         agent.fetchAndParseDepartments(model, searchIndex);
@@ -72,7 +71,7 @@ public class IntegrationTest {
         agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex, gitDir);
         // Add the acts and regs facts to the model.
         agent.fetchAndParseMetadata(model);
-        Assertions.assertTrue(pass.getValue(), "RDF parsing errors occurred.");
+        Assertions.assertTrue(pass, "RDF parsing errors occurred.");
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
@@ -84,7 +83,7 @@ public class IntegrationTest {
         // Write the model out as the WASM-SQLite DB
         agent.writeModelToSqlite(model, SQLITE_BUILD_PATH);
         // Write the index out as SOLR-formatted JSON
-        agent.writeIndexToJson(model, searchIndex, INDEX_BUILD_PATH);
+        agent.writeIndexToJson(searchIndex, INDEX_BUILD_PATH);
     }
 
 }
