@@ -23,7 +23,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -54,6 +53,10 @@ import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
+import org.openqa.selenium.By;
+import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
+import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
  *
@@ -140,7 +143,7 @@ public class RdfGatheringAgent {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try ( FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
             Iterator<String> it = index.keySet().iterator();
             while (it.hasNext()) {
@@ -173,7 +176,7 @@ public class RdfGatheringAgent {
         // Optimization is pulled from a resource called "finalize.sql"
         try {
             Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path);
-            try (Statement stmt = conn.createStatement()) {
+            try ( Statement stmt = conn.createStatement()) {
                 String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
                 String lines[] = ddlFile.split("\\r?\\n");
                 for (String line : lines) {
@@ -181,7 +184,7 @@ public class RdfGatheringAgent {
                 }
             }
             conn.setAutoCommit(false);
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
+            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
                 StmtIterator stmts = model.listStatements();
                 while (stmts.hasNext()) {
                     //Namespace conflict for JDBC Statements and Jena Statements!
@@ -213,7 +216,7 @@ public class RdfGatheringAgent {
                 stmt.execute();
             }
             for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
-                try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
+                try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
                     stmt.setString(1, entry.getKey());
                     stmt.setString(2, entry.getValue());
                     System.out.println(entry.getKey() + " -> " + entry.getValue());
@@ -222,7 +225,7 @@ public class RdfGatheringAgent {
             }
             conn.commit();
             conn.setAutoCommit(true);
-            try (Statement stmt = conn.createStatement()) {
+            try ( Statement stmt = conn.createStatement()) {
                 String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
                 String lines[] = ddlFile.split("\\r?\\n");
                 for (String line : lines) {
@@ -748,6 +751,32 @@ public class RdfGatheringAgent {
             }
         }
     }
+
+    void fetchAndParseOrdersInCouncil(Model model, Map<String, Map<String, String>> searchIndex) {
+        WebDriver driver = new HtmlUnitDriver(false);
+        driver.get(ORDER_IN_COUNCIL_URL);
+        System.out.println(driver.getTitle());
+        driver.findElement(By.id("btnSearch")).submit();
+        System.out.println(driver.getTitle());
+        System.out.println(driver.getCurrentUrl());
+        Integer maxPage = Integer.parseInt(driver.findElement(By.cssSelector("span.btn.btn-default.first")).getText());
+        System.out.println("Pages of OICs: " + maxPage);
+        maxPage = 3;
+        for (int i = 1; i <= maxPage; i++) { // Yes, they're 1-indexed. :(
+            driver.get("https://orders-in-council.canada.ca/results.php?lang=en&pageNum=" + i);
+            System.out.println(driver.getCurrentUrl());
+            org.jsoup.nodes.Document doc = Jsoup.parse(driver.getPageSource(), driver.getCurrentUrl());
+            Elements tables = doc.select("table");
+            for (org.jsoup.nodes.Element table : tables) {
+                String id = table.selectFirst("tr > td:eq(1)").text();
+                String date = table.selectFirst("tr > td:eq(2)").text();
+                String act = table.selectFirst("tr > td:containsOwn(act) + td").text();
+                String precis = table.selectFirst("tr > td:containsOwn(precis) + td").text();
+                System.out.println(id + " " + date + " " + act + " " + precis);
+            }
+        }
+    }
+    private static final String ORDER_IN_COUNCIL_URL = "https://orders-in-council.canada.ca/";
 
     private class RdfParsingErrorHandler implements ErrorHandler {
 

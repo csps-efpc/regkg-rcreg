@@ -138,6 +138,10 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>6.0.0.202111291000-r</version>
         </dependency>
-
+        <dependency>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>htmlunit-driver</artifactId>
+            <version>3.55.0</version>
+        </dependency>
     </dependencies>
 </project>
