@@ -6,7 +6,6 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.junit.jupiter.api.Assertions;
@@ -56,10 +55,11 @@ public class IntegrationTest {
         // Add local facts and prefixes to the model.
         boolean pass = agent.fetchAndParseLocalTurtle(new File("rdf"), model);
 
+
         // Try to pull the latest Acts & Regs from GitHub
         agent.cacheActsAndRegsFromGitHub(gitDir);
 
-        knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
+      knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
         // Add local facts and prefixes to the model.
         agent.fetchAndParseDepartments(model, searchIndex);
@@ -69,13 +69,18 @@ public class IntegrationTest {
 
         // Add the acts and regs facts to the model.
         agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex, gitDir);
-        // Add the acts and regs facts to the model.
+        
+        // Add the Metadata facts to the model.
         agent.fetchAndParseMetadata(model);
+
+        // Add the acts and regs facts to the model.
+        agent.fetchAndParseOrdersInCouncil(model, searchIndex, 250);
+
         Assertions.assertTrue(pass, "RDF parsing errors occurred.");
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }

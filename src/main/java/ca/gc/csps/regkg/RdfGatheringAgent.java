@@ -71,16 +71,21 @@ public class RdfGatheringAgent {
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
+
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
+    private static final String ORDER_IN_COUNCIL_URL = "https://orders-in-council.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
+
     private static final String TEXT_FIELD_ENGLISH = "text_en_txt";
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
     private static final String TITLE_FIELD_ENGLISH = "title_en_txt";
     private static final String TITLE_FIELD_FRENCH = "title_fr_txt";
     private static final String LINK_FIELD_ENGLISH = "url_en_str";
     private static final String LINK_FIELD_FRENCH = "url_fr_str";
+
     private static final Charset UTF8 = StandardCharsets.UTF_8;
+
     private static final String REFERENCE_CHAPTER_MARKER = ", c. ";
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
     private static final String REFERENCE_SECTIONS_MARKER = ", ss. ";
@@ -758,15 +763,30 @@ public class RdfGatheringAgent {
         }
     }
 
-    void fetchAndParseOrdersInCouncil(Model model, Map<String, Map<String, String>> searchIndex) {
+    /**
+     * Add the top orders-in-council to the given model and index. If the Acts &
+     * Regs are already in the model, they will be linked where the Act name
+     * matches.
+     *
+     * @param model the model to which the triples should be added
+     * @param searchIndex the search index to which the text should be added.
+     * @param maxOrders the maximum number of orders in council to add
+     */
+    public void fetchAndParseOrdersInCouncil(Model model, Map<String, Map<String, String>> searchIndex, int maxOrders) {
         //First, we cache the names of known Acts.
         Map<String, Resource> actNames = new HashMap<>();
         ResIterator namedSubjects = model.listSubjectsWithProperty(nameProperty);
         while (namedSubjects.hasNext()) {
             Resource subject = namedSubjects.nextResource();
             if (subject.getURI().startsWith(STATUTORY_INSTRUMENT_PREFIX)) {
-                String name = model.getProperty(subject, nameProperty, "en").getString();
-                actNames.put(name, subject);
+                org.apache.jena.rdf.model.Statement nameStatement = model.getProperty(subject, nameProperty, "en");
+                if (nameStatement == null) {
+                    nameStatement = model.getProperty(subject, nameProperty);
+                }
+                if (nameStatement != null) {
+                    String name = nameStatement.getString();
+                    actNames.put(name, subject);
+                }
             }
         }
         WebDriver driver = new HtmlUnitDriver(false);
@@ -777,7 +797,7 @@ public class RdfGatheringAgent {
         System.out.println(driver.getCurrentUrl());
         Integer maxPage = Integer.parseInt(driver.findElement(By.cssSelector("span.btn.btn-default.first")).getText());
         System.out.println("Pages of OICs: " + maxPage);
-        maxPage = Math.min(3, maxPage);
+        maxPage = Math.min(maxOrders / 5, maxPage);
         for (int i = 1; i <= maxPage; i++) { // Yes, they're 1-indexed. :(
             driver.get("https://orders-in-council.canada.ca/results.php?lang=en&pageNum=" + i);
             System.out.println(driver.getCurrentUrl());
@@ -786,7 +806,11 @@ public class RdfGatheringAgent {
             for (org.jsoup.nodes.Element table : tables) {
                 String id = table.selectFirst("tr > td:eq(1)").text();
                 String date = table.selectFirst("tr > td:eq(2)").text();
-                String act = table.selectFirst("tr > td:containsOwn(act) + td").text();
+                String act = null;
+                org.jsoup.nodes.Element actElement = table.selectFirst("tr > td:containsOwn(act) + td");
+                if (actElement != null) {
+                    act = actElement.text();
+                }
                 String precis = table.selectFirst("tr > td:containsOwn(precis) + td").text();
                 String url = null;
                 org.jsoup.nodes.Element attachmentLink = table.selectFirst("tr > td:containsOwn(attachments) + td > a");
@@ -804,12 +828,14 @@ public class RdfGatheringAgent {
                     name = id + " - " + subjectElement.text();
                 }
                 final Resource subject = ResourceFactory.createResource(instrumentURI);
-                Resource enablingSubject = actNames.get(act);
-                if (enablingSubject != null) {
-                    model.add(subject, enablingActProperty, enablingSubject);
-                } else {
-                    if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
-                        Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
+                if (act != null) {
+                    Resource enablingSubject = actNames.get(act);
+                    if (enablingSubject != null) {
+                        model.add(subject, enablingActProperty, enablingSubject);
+                    } else {
+                        if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
+                            Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
+                        }
                     }
                 }
 
@@ -828,7 +854,6 @@ public class RdfGatheringAgent {
             }
         }
     }
-    private static final String ORDER_IN_COUNCIL_URL = "https://orders-in-council.canada.ca/";
 
     private class RdfParsingErrorHandler implements ErrorHandler {
 
