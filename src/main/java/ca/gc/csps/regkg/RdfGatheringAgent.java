@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -28,15 +29,19 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import net.sourceforge.htmlunit.corejs.javascript.ast.Jump;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
+import org.apache.jena.datatypes.RDFDatatype;
+import org.apache.jena.datatypes.xsd.impl.XSDDateType;
 import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Literal;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.RDFVisitor;
+import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
 import org.apache.jena.rdf.model.StmtIterator;
@@ -55,7 +60,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
@@ -66,6 +70,7 @@ public class RdfGatheringAgent {
 
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
+    private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
@@ -79,9 +84,10 @@ public class RdfGatheringAgent {
     private static final String REFERENCE_CHAPTER_MARKER = ", c. ";
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
     private static final String REFERENCE_SECTIONS_MARKER = ", ss. ";
+    private static final String OTHER_THAN_STATUTORY_AUTHORITY = "Other Than Statutory Authority";
 
     // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
-    final PropertyImpl statutoryInstrumentIdProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/instrument-id");
+    final PropertyImpl legislationIdentifierProperty = new PropertyImpl("https://schema.org/legislationIdentifier");
     final PropertyImpl sponsorProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/sponsor");
     final PropertyImpl consultationWordCountProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/consultation-word-count");
     final PropertyImpl wordCountProperty = new PropertyImpl("https://schema.org/wordCount");
@@ -89,19 +95,20 @@ public class RdfGatheringAgent {
     final PropertyImpl cbaWordCountProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/cba-word-count");
     final PropertyImpl riasWordCountProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/rias-word-count");
     final PropertyImpl enablingActProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-act");
-    final PropertyImpl amendsInstrumentProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/amends-instrument");
-    final PropertyImpl consolidatesProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/consolidates");
+    final PropertyImpl legislationAmendsProperty = new PropertyImpl("https://schema.org/legislationChanges");
+    final PropertyImpl consolidatesProperty = new PropertyImpl("https://schema.org/legislationConsolidates");
     final PropertyImpl enablesRegProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enables-regulation");
-    final PropertyImpl titleProperty = new PropertyImpl("https://schema.org/name");
+    final PropertyImpl nameProperty = new PropertyImpl("https://schema.org/name");
     final PropertyImpl urlProperty = new PropertyImpl("https://schema.org/url");
     final PropertyImpl orgnameProperty = new PropertyImpl("https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name");
     final PropertyImpl departmentHeadProperty = new PropertyImpl("https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head");
     final PropertyImpl metadataLabelProperty = new PropertyImpl("https://www.csps-efpc.gc.ca/ext/instrument-references");
+    final PropertyImpl legislationDateProperty = new PropertyImpl("https://schema.org/legislationDate");
 
     /**
      * Recursively read turtle files into the given model.
      *
-     * @param root the file path frm which to start searching for .ttl and .nt
+     * @param root the file path from which to start searching for .ttl and .nt
      * files
      * @param model the RDF model into which triples and namespaces should be
      * inserted
@@ -123,7 +130,6 @@ public class RdfGatheringAgent {
                     System.err.println("ERROR: Unexpected file extension at " + path);
                     pass.setFalse();
                 }
-
             }
         });
         return pass.isTrue();
@@ -318,7 +324,7 @@ public class RdfGatheringAgent {
                     if (regText.contains("ACT") && regText.indexOf("ACT") < regText.indexOf(" P.C. ")) {
                         startIndex = regText.indexOf("ACT") + 3;
                     }
-                    model.add(subject, titleProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim());
+                    model.add(subject, nameProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim());
                 }
                 model.add(subject, sponsorProperty, record.get("sponsor"));
                 model.add(subject, cbaWordCountProperty, record.get("CBA.wordcount"));
@@ -402,7 +408,7 @@ public class RdfGatheringAgent {
                         || entry.getKey().startsWith("S.C._")
                         || entry.getKey().startsWith("SI-")
                         || entry.getKey().startsWith("SOR-")) {
-                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.titleProperty, String.valueOf(entry.getValue()));
+                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.nameProperty, String.valueOf(entry.getValue()));
                 } else {
                     System.out.println("Unparsable instrument: [" + entry.getKey() + "] " + entry.getValue());
                 }
@@ -418,7 +424,7 @@ public class RdfGatheringAgent {
         final Resource instrumentURI = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
         SAXBuilder builder = new SAXBuilder();
         Document engDoc = fetchDoc(gitDir, instrumentId, builder, "eng");
-        String frenchId = toUrlSafeId(model.getProperty(instrumentURI, statutoryInstrumentIdProperty, "fr").getString());
+        String frenchId = toUrlSafeId(model.getProperty(instrumentURI, legislationIdentifierProperty, "fr").getString());
         Document fraDoc = fetchDoc(gitDir, frenchId, builder, "fra");
 
         // At this point we either have the documents, or have thrown an exception.
@@ -479,7 +485,7 @@ public class RdfGatheringAgent {
         for (String amendingRegId : amendingRegIds) {
             final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + amendingRegId);
             model.add(instrumentURI, consolidatesProperty, amendingReg);
-            model.add(amendingReg, amendsInstrumentProperty, instrumentURI);
+            model.add(amendingReg, legislationAmendsProperty, instrumentURI);
         }
         model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
     }
@@ -595,7 +601,7 @@ public class RdfGatheringAgent {
                 // The following two properties are language dependent -- we should do the same for French
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         uniqueId, language);
                 statutoryInstrumentIds.add(uniqueId);
                 knownStatutoryInstruments.add(uniqueId);
@@ -614,7 +620,7 @@ public class RdfGatheringAgent {
 //                        regElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         regElement.getChildTextTrim("UniqueId"), language);
             }
         }
@@ -643,11 +649,11 @@ public class RdfGatheringAgent {
                                 ResourceFactory.createResource(regAttributes.get("instrumentURI")));
                     }
                 }
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), nameProperty,
                         actElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "FullText.html"), language);
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         uniqueId, language);
                 statutoryInstrumentIds.add(uniqueId);
                 knownStatutoryInstruments.add(uniqueId);
@@ -656,11 +662,11 @@ public class RdfGatheringAgent {
                 final String url = actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html");
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), titleProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), nameProperty,
                         actElement.getChildTextTrim("Title"), language);
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         actElement.getChildTextTrim("LinkToHTMLToC").replace("index.html", "TexteComplet.html"), language);
-                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), statutoryInstrumentIdProperty,
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         actElement.getChildTextTrim("UniqueId"), language);
                 statutoryInstrumentIds.add(uniqueId);
                 knownStatutoryInstruments.add(uniqueId);
@@ -753,6 +759,16 @@ public class RdfGatheringAgent {
     }
 
     void fetchAndParseOrdersInCouncil(Model model, Map<String, Map<String, String>> searchIndex) {
+        //First, we cache the names of known Acts.
+        Map<String, Resource> actNames = new HashMap<>();
+        ResIterator namedSubjects = model.listSubjectsWithProperty(nameProperty);
+        while (namedSubjects.hasNext()) {
+            Resource subject = namedSubjects.nextResource();
+            if (subject.getURI().startsWith(STATUTORY_INSTRUMENT_PREFIX)) {
+                String name = model.getProperty(subject, nameProperty, "en").getString();
+                actNames.put(name, subject);
+            }
+        }
         WebDriver driver = new HtmlUnitDriver(false);
         driver.get(ORDER_IN_COUNCIL_URL);
         System.out.println(driver.getTitle());
@@ -761,7 +777,7 @@ public class RdfGatheringAgent {
         System.out.println(driver.getCurrentUrl());
         Integer maxPage = Integer.parseInt(driver.findElement(By.cssSelector("span.btn.btn-default.first")).getText());
         System.out.println("Pages of OICs: " + maxPage);
-        maxPage = 3;
+        maxPage = Math.min(3, maxPage);
         for (int i = 1; i <= maxPage; i++) { // Yes, they're 1-indexed. :(
             driver.get("https://orders-in-council.canada.ca/results.php?lang=en&pageNum=" + i);
             System.out.println(driver.getCurrentUrl());
@@ -772,7 +788,43 @@ public class RdfGatheringAgent {
                 String date = table.selectFirst("tr > td:eq(2)").text();
                 String act = table.selectFirst("tr > td:containsOwn(act) + td").text();
                 String precis = table.selectFirst("tr > td:containsOwn(precis) + td").text();
-                System.out.println(id + " " + date + " " + act + " " + precis);
+                String url = null;
+                org.jsoup.nodes.Element attachmentLink = table.selectFirst("tr > td:containsOwn(attachments) + td > a");
+                if (attachmentLink != null) {
+                    try {
+                        url = new URL(new URL(driver.getCurrentUrl()), attachmentLink.attr("href")).toExternalForm();
+                    } catch (MalformedURLException ex) {
+                        Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Invalid attachment url spec \"{0}\" found on page {1}", new Object[]{attachmentLink.attr("href"), driver.getCurrentUrl()});
+                    }
+                }
+                String instrumentURI = ORDER_IN_COUNCIL_PREFIX + id;
+                String name = id;
+                final org.jsoup.nodes.Element subjectElement = table.selectFirst("tr > td:containsOwn(subject) + td");
+                if (subjectElement != null) {
+                    name = id + " - " + subjectElement.text();
+                }
+                final Resource subject = ResourceFactory.createResource(instrumentURI);
+                Resource enablingSubject = actNames.get(act);
+                if (enablingSubject != null) {
+                    model.add(subject, enablingActProperty, enablingSubject);
+                } else {
+                    if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
+                        Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
+                    }
+                }
+
+                model.add(subject, legislationDateProperty, date, XSDDateType.XSDdate);
+                model.add(subject, legislationIdentifierProperty, id);
+                model.add(subject, nameProperty, name);
+                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
+                index.put(TEXT_FIELD_ENGLISH, precis);
+                index.put(TITLE_FIELD_ENGLISH, name);
+                if (url != null) {
+                    index.put(LINK_FIELD_ENGLISH, url);
+                }
+                searchIndex.put(instrumentURI, index);
+
+                //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
             }
         }
     }
