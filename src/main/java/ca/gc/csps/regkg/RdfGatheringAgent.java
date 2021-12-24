@@ -73,7 +73,8 @@ public class RdfGatheringAgent {
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
 
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
-    private static final String ORDER_IN_COUNCIL_URL = "https://orders-in-council.canada.ca/";
+    private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
+    private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
 
@@ -790,7 +791,7 @@ public class RdfGatheringAgent {
             }
         }
         WebDriver driver = new HtmlUnitDriver(false);
-        driver.get(ORDER_IN_COUNCIL_URL);
+        driver.get(ORDER_IN_COUNCIL_URL_ENGLISH);
         System.out.println(driver.getTitle());
         driver.findElement(By.id("btnSearch")).submit();
         System.out.println(driver.getTitle());
@@ -841,7 +842,7 @@ public class RdfGatheringAgent {
 
                 model.add(subject, legislationDateProperty, date, XSDDateType.XSDdate);
                 model.add(subject, legislationIdentifierProperty, id);
-                model.add(subject, nameProperty, name);
+                model.add(subject, nameProperty, name, "en");
                 Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
                 index.put(TEXT_FIELD_ENGLISH, precis);
                 index.put(TITLE_FIELD_ENGLISH, name);
@@ -853,6 +854,52 @@ public class RdfGatheringAgent {
                 //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
             }
         }
+        //A second pass to grab the additional French properties is necessary.
+        driver.get(ORDER_IN_COUNCIL_URL_FRENCH);
+        System.out.println(driver.getTitle());
+        driver.findElement(By.id("btnSearch")).submit();
+        System.out.println(driver.getTitle());
+        System.out.println(driver.getCurrentUrl());
+        maxPage = Integer.parseInt(driver.findElement(By.cssSelector("span.btn.btn-default.first")).getText());
+        System.out.println("Pages de PCs: " + maxPage);
+        maxPage = Math.min(maxOrders / 5, maxPage);
+        for (int i = 1; i <= maxPage; i++) { // Yes, they're 1-indexed. :(
+            driver.get("https://decrets.canada.ca/results.php?lang=fr&pageNum=" + i);
+            System.out.println(driver.getCurrentUrl());
+            org.jsoup.nodes.Document doc = Jsoup.parse(driver.getPageSource(), driver.getCurrentUrl());
+            Elements tables = doc.select("table");
+            for (org.jsoup.nodes.Element table : tables) {
+                String id = table.selectFirst("tr > td:eq(1)").text();
+                String precis = table.selectFirst("tr > td:containsOwn(précis) + td").text();
+                String url = null;
+                org.jsoup.nodes.Element attachmentLink = table.selectFirst("tr > td:containsOwn(pièces jointes) + td > a");
+                if (attachmentLink != null) {
+                    try {
+                        url = new URL(new URL(driver.getCurrentUrl()), attachmentLink.attr("href")).toExternalForm();
+                    } catch (MalformedURLException ex) {
+                        Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Invalid attachment url spec \"{0}\" found on page {1}", new Object[]{attachmentLink.attr("href"), driver.getCurrentUrl()});
+                    }
+                }
+                String instrumentURI = ORDER_IN_COUNCIL_PREFIX + id;
+                String name = id;
+                final org.jsoup.nodes.Element subjectElement = table.selectFirst("tr > td:containsOwn(sujet) + td");
+                if (subjectElement != null) {
+                    name = id + " - " + subjectElement.text();
+                }
+                final Resource subject = ResourceFactory.createResource(instrumentURI);
+                model.add(subject, nameProperty, name, "fr");
+                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
+                index.put(TEXT_FIELD_FRENCH, precis);
+                index.put(TITLE_FIELD_FRENCH, name);
+                if (url != null) {
+                    index.put(LINK_FIELD_FRENCH, url);
+                }
+                searchIndex.put(instrumentURI, index);
+
+                //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
+            }
+        }
+        
     }
 
     private class RdfParsingErrorHandler implements ErrorHandler {
