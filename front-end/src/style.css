@@ -8,6 +8,12 @@
   border-style: solid;
 }
 
+.slight-border{
+  border-width: 1px;
+  border-color: grey;
+  border-style: solid;
+}
+
 h1{
   font-size: 2.9375em;
   font-style: bold; 
@@ -29,4 +35,13 @@ p{
 
 .no-underline{
   text-decoration: none;
+}
+
+.left-button{
+  text-align: left !important;
+}
+
+.inline-icon-large{
+  vertical-align: top;
+  font-size: 2rem !important;
 }
