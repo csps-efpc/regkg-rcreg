@@ -1,10 +1,7 @@
 import React, { useState, useContext } from "react";
 import Container from "react-bootstrap/Container";
-import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
-import Navbar from "react-bootstrap/Navbar";
-import Nav from "react-bootstrap/Nav";
 import {FormattedMessage} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
