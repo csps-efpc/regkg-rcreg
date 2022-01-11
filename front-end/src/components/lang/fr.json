@@ -20,5 +20,7 @@
 	"app.search.introduction" : "La recherche Knowledge Graph est alimentée par un moteur flexible. Vous pouvez effectuer une recherche en utilisant des termes simples comme « pêche », « règlements » ou même « règlements de pêche ». Essaye le!",
 	"app.search.advancedQueries" : "Si vous souhaitez en savoir plus sur les requêtes avancées, voici un ",
 	"app.search.referenceGuide" : "guide de référence. (Anglais)",
-	"app.search.searchLabel" : "Termes De Recherche"
+	"app.search.searchLabel" : "Termes De Recherche",
+        "app.result.related" : "Règlements connexes",
+        "app.result.link" : "Ouvrir dans un nouvel onglet"
 }
