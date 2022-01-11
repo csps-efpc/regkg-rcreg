@@ -20,5 +20,7 @@
 	"app.search.introduction" : "The Knowledge Graph Search is powered with a flexible engine. You can search using simple terms like 'fishing', 'regulations' or even 'fishing regulations'. Try it out!",
 	"app.search.advancedQueries" : "If you would like to learn about advanced queries, here is a ",
 	"app.search.referenceGuide" : "reference guide.",
-	"app.search.searchLabel" : "Search Terms"
+	"app.search.searchLabel" : "Search Terms",
+        "app.result.related" : "Related Regulations",
+        "app.result.link" : "Open in new tab"
 }

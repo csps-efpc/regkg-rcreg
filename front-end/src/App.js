@@ -10,6 +10,7 @@ const App = () => {
       <Routes >
         <Route exact path="/" element={<Home />}></Route>
         <Route exact path="/search" element={<Search />}></Route>
+        <Route path="/regkg/" element={<Home />}></Route>
       </Routes >
     </BrowserRouter>
   );
