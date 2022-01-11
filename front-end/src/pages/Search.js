@@ -38,7 +38,8 @@ const Search = () => {
 
     fetch(requestURL + new URLSearchParams({
         q:searchQuery,
-        df:`text_${currentLang}_txt`
+        df:`text_${currentLang}_txt`,
+        'q.op': "AND"
     }), {
       method: "GET",
       dataType: "JSON",
