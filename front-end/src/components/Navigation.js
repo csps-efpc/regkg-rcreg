@@ -5,6 +5,7 @@ import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
+import {Link} from 'react-router-dom'
 import {FormattedMessage, useIntl } from 'react-intl';
 import {Context} from "../components/lang/LanguageWrapper";
 import "../style.css";
@@ -84,10 +85,10 @@ const Navigation = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.home}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} href="search">{navbarTranslations.search}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.about}</Nav.Link>
-            <Nav.Link aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} href="/">{navbarTranslations.contact}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.home}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to="search">{navbarTranslations.search}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.about}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.contact}</Nav.Link>
           </Nav>
         </Navbar.Collapse>
         <Navbar.Collapse className="justify-content-end">
