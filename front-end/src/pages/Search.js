@@ -68,6 +68,8 @@ const Search = () => {
     advancedQueries : <FormattedMessage id = "app.search.advancedQueries" />,
     referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
     searchLabel : <FormattedMessage id = "app.search.searchLabel" />,
+    relatedItems : <FormattedMessage id = "app.result.related" />,
+    openInNewTab : <FormattedMessage id = "app.result.link" />,
   }
 
   let searchResultJSX = "";
@@ -83,7 +85,7 @@ const Search = () => {
             <Row>
               <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
                 <span class="material-icons inline-icon-large">chevron_right</span>
-                Related Regulations
+                {contentTranslations.relatedItems}
               </Button>
             </Row>
             {/*<Row><p>{(doc[1][`text_${currentLang}_txt`]).toString().slice(0, 150) + "..."}</p></Row>*/}
@@ -92,7 +94,7 @@ const Search = () => {
             </Row>
             <Row>
               <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
-                <span class="material-icons inline-icon-large">open_in_new</span> Open Regulation In New Tab
+                <span class="material-icons inline-icon-large">open_in_new</span>{contentTranslations.openInNewTab}
               </Button>
             </Row>
           </Container>
