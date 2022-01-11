@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import Container from "react-bootstrap/Container";
 import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
@@ -19,8 +19,23 @@ const Search = () => {
   const langContext = useContext(Context);
   const currentLang = langContext.locale;
 
+  // String containing what the user has put in the search box
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Array of object from the search API, no extra data
   const [searchResults, setsearchResults] = useState("");
+
+  // Array of more info for each search result that has
+  // had the Related Regulations button clicked
+  const [sparqlData, setSparqlData] = useState("");
+
+  // Clear the Search Query and Search Results when the language context is updated.
+  useEffect(() => {
+    setSearchQuery("");
+    setsearchResults("");
+    setSparqlData("");
+  }, [currentLang]);
+
 
   const updateQuery = (e) => {
     setSearchQuery(e.target.value);
@@ -85,7 +100,7 @@ const Search = () => {
             <Row><h2>{doc[1][`title_${currentLang}_txt`]}</h2></Row>
             <Row>
               <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
-                <span class="material-icons inline-icon-large">chevron_right</span>
+                <span className="material-icons inline-icon-large">chevron_right</span>
                 {contentTranslations.relatedItems}
               </Button>
             </Row>
@@ -95,7 +110,7 @@ const Search = () => {
             </Row>
             <Row>
               <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
-                <span class="material-icons inline-icon-large">open_in_new</span>{contentTranslations.openInNewTab}
+                <span className="material-icons inline-icon-large">open_in_new</span>{contentTranslations.openInNewTab}
               </Button>
             </Row>
           </Container>
@@ -131,7 +146,7 @@ const Search = () => {
 
           {/*Search Box*/}
           <InputGroup size="lg">
-            <FormControl aria-label="Large" aria-describedby="inputGroup-sizing-lg" onChange={updateQuery}/>
+            <FormControl aria-label="Large" aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={searchQuery}/>
             <Button variant="primary" id="search-button" onClick={submitQuery}>
               {contentTranslations.mainButton}
             </Button>
