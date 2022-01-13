@@ -745,13 +745,22 @@ public class RdfGatheringAgent {
         String text = collectTextFrom(engDoc.getRootElement()).toString();
         int wordCount = countWordsIn(text);
         model.add(instrumentURI, wordCountProperty, String.valueOf(wordCount), lang);
-        String shortTitle = instrumentId;
+        String title = instrumentId;
         Element identification = engDoc.getRootElement().getChild("Identification");
         if (identification != null) {
-            shortTitle = identification.getChildTextNormalize("ShortTitle");
+            title = identification.getChildTextNormalize("ShortTitle");
+            if (title == null) {
+                title = identification.getChildTextNormalize("LongTitle");
+            }
+            if (title == null) {
+                title = identification.getChildTextNormalize("InstrumentNumber");
+            }
+            if (title == null) {
+                title = instrumentId;
+            }
             Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<String, String>());
             index.put(textFieldName, collectTextFrom(identification).toString());
-            index.put(titleFieldName, shortTitle);
+            index.put(titleFieldName, title);
             if (url != null) {
                 index.put(linkFieldName, url);
             }
@@ -759,7 +768,7 @@ public class RdfGatheringAgent {
         }
         if (engDoc.getRootElement().getChild("Body") != null) {
             for (Element section : engDoc.getRootElement().getChild("Body").getChildren("Section")) {
-                addLimsSectionToIndex(limsNamespace, section, instrumentURI, searchIndex, textFieldName, titleFieldName, shortTitle, url, linkFieldName);
+                addLimsSectionToIndex(limsNamespace, section, instrumentURI, searchIndex, textFieldName, titleFieldName, title, url, linkFieldName);
             }
         }
     }
