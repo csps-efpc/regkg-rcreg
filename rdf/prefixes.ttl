@@ -7,6 +7,7 @@
 @prefix recgen: <https://www.tpsgc-pwgsc.gc.ca/recgen/> .
 @prefix rias: <https://www.gazette.gc.ca/ext/> .
 @prefix csps: <https://www.csps-efpc.gc.ca/ext/> .
+@prefix oic: <https://orders-in-council.canada.ca/> .
     
 # Inline triples can be expressed like:
 # inst:F-14 app:affects naics:11411 .
