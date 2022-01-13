@@ -54,9 +54,6 @@ const Search = () => {
 
   if (searchResults.docs){
     for (let doc of Object.entries(searchResults.docs)) {
-      console.log("doc");
-      console.log(doc);
-      console.log("doc");
       if(doc[1][`text_${currentLang}_txt`]){
         searchResultItems.push(
           <SingleResult doc={doc[1]} setSparqlData={setSparqlData} language={currentLang}/>
