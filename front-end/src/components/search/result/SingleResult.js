@@ -15,10 +15,10 @@ import Information from "./Information";
 const SingleResult = (props) =>{
 
   return(
-    <Container className="slight-border px-5 py-3 mb-2 rounded-3">
+    <Container className="slight-border px-5 py-3 mb-2 rounded-3" key={props.doc.id} >
       <Row><h2>{props.doc[`title_${props.language}_txt`]}</h2></Row>
       <Row>
-        <Information id={props.doc.id} language={props.language} setSparqlData={props.setSparqlData} />
+        <Information id={props.doc.id} language={props.language} setSparqlData={props.setSparqlData} sparqlData={props.sparqlData} />
       </Row>
       {/*<Row><p>{(props.doc[`text_${props.language}_txt`]).toString().slice(0, 150) + "..."}</p></Row>*/}
       <Row>
