@@ -21,6 +21,24 @@
 	"app.search.advancedQueries" : "Si vous souhaitez en savoir plus sur les requêtes avancées, voici un ",
 	"app.search.referenceGuide" : "guide de référence. (Anglais)",
 	"app.search.searchLabel" : "Termes De Recherche",
-        "app.result.related" : "Règlements connexes",
-        "app.result.link" : "Ouvrir dans un nouvel onglet"
+    "app.result.related" : "Règlements connexes",
+    "app.result.link" : "Ouvrir dans un nouvel onglet",
+	"app.result.information" : "Plus d'informations",
+
+    "https://schema.org/wordCount" : "Nombre de mots",
+    "https://www.gazette.gc.ca/ext/consultation-word-count" : "Nombre de mots",
+    "https://www.gazette.gc.ca/ext/cba-word-count" : "Nombre de mots",
+    "https://www.gazette.gc.ca/ext/rias-word-count" : "Nombre de mots",
+    "https://laws-lois.justice.gc.ca/ext/instrument-id" : "Identifiant de l'instrument",
+    "https://www.gazette.gc.ca/ext/sponsor" : "Parrainer",
+    "https://laws-lois.justice.gc.ca/ext/section-count" : "Nombre de sections",
+    "https://laws-lois.justice.gc.ca/ext/enabling-act" : "Activation de l'action",
+    "https://laws-lois.justice.gc.ca/ext/amends-instrument" : "Modifie l'instrument",
+    "https://laws-lois.justice.gc.ca/ext/consolidates" : "Consolide",
+    "https://laws-lois.justice.gc.ca/ext/enables-regulation" : "Permet la régulation",
+    "https://schema.org/name" : "Nom",
+    "https://schema.org/url" : "URL",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name" : "Nom de l'organisation",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head" : "Chef de département",
+    "https://www.csps-efpc.gc.ca/ext/instrument-references" : "Références d'instruments"
 }

@@ -21,6 +21,24 @@
 	"app.search.advancedQueries" : "If you would like to learn about advanced queries, here is a ",
 	"app.search.referenceGuide" : "reference guide.",
 	"app.search.searchLabel" : "Search Terms",
-        "app.result.related" : "Related Regulations",
-        "app.result.link" : "Open in new tab"
+    "app.result.related" : "Related Regulations",
+    "app.result.link" : "Open in new tab",
+    "app.result.information" : "More Information",
+
+    "https://schema.org/wordCount" : "Word Count",
+    "https://www.gazette.gc.ca/ext/consultation-word-count" : "Word Count",
+    "https://www.gazette.gc.ca/ext/cba-word-count" : "Word Count",
+    "https://www.gazette.gc.ca/ext/rias-word-count" : "Word Count",
+    "https://laws-lois.justice.gc.ca/ext/instrument-id" : "Instrument ID",
+    "https://www.gazette.gc.ca/ext/sponsor" : "Sponsor",
+    "https://laws-lois.justice.gc.ca/ext/section-count" : "Section Count",
+    "https://laws-lois.justice.gc.ca/ext/enabling-act" : "Enabling Action",
+    "https://laws-lois.justice.gc.ca/ext/amends-instrument" : "Amends Instrument",
+    "https://laws-lois.justice.gc.ca/ext/consolidates" : "Consolidates",
+    "https://laws-lois.justice.gc.ca/ext/enables-regulation" : "Enables Regulation",
+    "https://schema.org/name" : "Name",
+    "https://schema.org/url" : "URL",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name" : "Organization Name",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head" : "Department Head",
+    "https://www.csps-efpc.gc.ca/ext/instrument-references" : "Instrument References"
 }
