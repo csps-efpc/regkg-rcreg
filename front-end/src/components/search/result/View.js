@@ -8,10 +8,21 @@ import Button from "react-bootstrap/Button";
   Sets the state with that URL if the button is pressed again
 
   props:
-    id: 
+    id: a string identifying the exact regulatory instrument
+      example: https://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6
+      example 2: https://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6#1423 where the #1423 is the id for the block within the regulation
+
+      if there is a # symbol, be aware to split the string at it and take the text before the hash
+      if there is not, do not split
 */
 
 const View = (props) => {
+
+  const queryStringGenerator = (id) => {
+    const querySign = "query=";
+    const selectTerms = encodeURIComponent("SELECT * {") + "" + encodeURIComponent("<") + id.split("#")[0] + encodeURIComponent("> <") + "https://schema.org/url" + encodeURIComponent("> ") + "?o}" + encodeURIComponent(" LIMIT 8");
+    return querySign + selectTerms;
+  }
 
   const submitSparqlURL = async(id) => {
     /* Single search term: https://dev.handshape.com/sparql?query=SELECT%20*%20{%3Chttps://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6%3E%20%3Chttps://schema.org/url%3E%20?o}%20LIMIT%208&Accept=application/sparql-results%2Bjson */
@@ -19,48 +30,13 @@ const View = (props) => {
     //const currentHost = window.location.hostname;
     const currentHost = "dev.handshape.com";
     const spaqrlPath = "/sparql?"
-    const selectTerms = encodeURIComponent(`SELECT * {<${id}> <https://schema.org/url> ?o} LIMIT 8`);
-    const acceptTerms = encodeURIComponent(`Accept=application/sparql-results+json`);
-    const requestURL = protocol + currentHost + spaqrlPath;
+    const selectTerms = queryStringGenerator(id)
+    const acceptTerms = `Accept=application/sparql-results+json`;
+    const requestURL = protocol + currentHost + spaqrlPath + selectTerms + "&Accept=application/sparql-results%2Bjson";
 
-    fetch(requestURL + new URLSearchParams({
-        query:selectTerms,
-        Accept:`application/sparql-results+json`
-    }), {
-      method: "GET",
-      dataType: "JSON",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-      },
-      mode: 'no-cors'
-    })
+    fetch(requestURL)
     .then((resp) => {
-      //return resp.json();
-      return {
-          "head": {
-              "vars": [
-                  "o"
-              ]
-          },
-          "results": {
-              "bindings": [
-                  {
-                      "o": {
-                          "type": "literal",
-                          "xml:lang": "en",
-                          "value": "http://laws-lois.justice.gc.ca/eng/acts/P-15.6/FullText.html"
-                      }
-                  },
-                  {
-                      "o": {
-                          "type": "literal",
-                          "xml:lang": "fr",
-                          "value": "http://laws-lois.justice.gc.ca/fra/lois/P-15.6/TexteComplet.html"
-                      }
-                  }
-              ]
-          }
-      }
+      return resp.json();
     }) 
     .then((data) => {
       return data.results.bindings
@@ -74,7 +50,12 @@ const View = (props) => {
           return data[1].o.value
     })
     .then((data) => {
-      window.open(data, '_blank').focus();
+      if(id.includes("#")){
+        window.open(data + "#" + id.split("#")[1], '_blank').focus();
+      } else {
+        window.open(data, '_blank').focus();
+      }
+
     })
     .catch((error) => {
       console.log(error)
