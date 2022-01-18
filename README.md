@@ -30,3 +30,7 @@ To build the project with Docker, use version 18.09 or higher as it uses [BuildK
 Following the build, the static HTML files will be output in the `front-end/build` folder.
 
 For more information on running the front end, see the [Read Me](front-end/README.md).
+
+## Schema information
+
+Information about the RDF schema used can be found in (the schema reference)[SCHEMA.md].
