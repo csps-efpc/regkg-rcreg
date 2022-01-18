@@ -11,6 +11,15 @@ import {Context} from "../components/lang/LanguageWrapper";
 import "../style.css";
 import logo from "../img/logo.svg";
 
+/*
+  Pages of Use: All
+  Description: Creates a navigation bar that is i18n enabled.
+
+  Users can browse between all the pages on the site, and switch languages.
+
+  Toggling the language will simply update the LanguageWrapper, therefore
+  you should be using the LanguageWrapper for text within pages/components
+*/
 
 const Navigation = () => {
 

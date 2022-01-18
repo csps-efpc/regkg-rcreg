@@ -1,6 +1,24 @@
 import React, {useState} from "react";
 import {IntlProvider} from "react-intl";
 
+/*
+    Pages of Use: All
+    Description: Provides access to the translation files (en, fr, etc..) via Context.
+
+    To get the translations in JSK:
+        import {FormattedMessage, useIntl } from 'react-intl';
+        <FormattedMessage id = "id.from.json.file" />
+
+    To get the translations as a string (aria-tags for example):
+        import {useIntl } from 'react-intl';
+        useIntl().formatMessage({id: "id.from.json.file"})
+
+    To track when the language changes:
+    useEffect(() => {
+        console.log("Language is now: " + useContext(Context).locale)
+    }, [useContext(Context).locale]);
+*/
+
 export const Context = React.createContext();
 
 // Determines the language based on the browser settings

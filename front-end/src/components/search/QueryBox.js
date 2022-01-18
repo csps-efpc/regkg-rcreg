@@ -21,15 +21,6 @@ import "../../style.css";
 
 */
 
-  const contentTranslations = {
-    title : <FormattedMessage id = "app.search.title" />,
-    mainButton : <FormattedMessage id = "app.search.mainButton" />,
-    introduction : <FormattedMessage id = "app.search.introduction" />,
-    advancedQueries : <FormattedMessage id = "app.search.advancedQueries" />,
-    referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
-    searchLabel : <FormattedMessage id = "app.search.searchLabel" />,
-  }
-
 const QueryBox = (props) => {
 
   const submitQuery = async() => {
@@ -44,7 +35,7 @@ const QueryBox = (props) => {
 
     fetch(requestURL + new URLSearchParams({
         q:props.searchQuery,
-        df:`text_${props.currentLang}_txt`,
+        df:`text_${props.language}_txt`,
         'q.op': "AND"
     }), {
       method: "GET",
@@ -58,9 +49,6 @@ const QueryBox = (props) => {
     }) 
     .then((data) => {
       props.setsearchResults(data.response);
-    })
-    .then(() => {
-      console.log(props.searchResults);
     })
     .catch((error) => {
       console.log(error, "catch the blip");

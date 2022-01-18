@@ -10,6 +10,8 @@ import {FormattedMessage} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
 import Theme from "../components/Theme";
+import QueryBox from "../components/search/QueryBox";
+import SingleResult from "../components/search/result/SingleResult";
 
 import {Context} from "../components/lang/LanguageWrapper";
 
@@ -36,47 +38,6 @@ const Search = () => {
     setSparqlData("");
   }, [currentLang]);
 
-
-  const updateQuery = (e) => {
-    setSearchQuery(e.target.value);
-  }
-
-  const submitQuery = async() => {
-    /* Single search term: https://dev.handshape.com/search?df=text_en_txt&q=fish */
-    const protocol = "https://";
-    //const currentHost = window.location.hostname;
-    const currentHost = "dev.handshape.com";
-    const solrPath = "/search?"
-    const langTerms = `text_${currentLang}_txt`;
-    const searchTerms = `q=${searchQuery}`;
-    const requestURL = protocol + currentHost + solrPath;
-
-    fetch(requestURL + new URLSearchParams({
-        q:searchQuery,
-        df:`text_${currentLang}_txt`,
-        'q.op': "AND"
-    }), {
-      method: "GET",
-      dataType: "JSON",
-      headers: {
-        "Content-Type": "application/json; charset=utf-8",
-      }
-    })
-    .then((resp) => {
-      return resp.json()
-    }) 
-    .then((data) => {
-      setsearchResults(data.response);
-    })
-    .then(() => {
-      console.log(searchResults);
-    })
-    .catch((error) => {
-      console.log(error, "catch the blip")
-    })
-
-  }
-
   const contentTranslations = {
     title : <FormattedMessage id = "app.search.title" />,
     mainButton : <FormattedMessage id = "app.search.mainButton" />,
@@ -94,26 +55,8 @@ const Search = () => {
   if (searchResults.docs){
     for (let doc of Object.entries(searchResults.docs)) {
       if(doc[1][`text_${currentLang}_txt`]){
-        console.log(doc[1][`text_${currentLang}_txt`][0]);
         searchResultItems.push(
-          <Container className="slight-border px-5 py-3 mb-2 rounded-3">
-            <Row><h2>{doc[1][`title_${currentLang}_txt`]}</h2></Row>
-            <Row>
-              <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
-                <span className="material-icons inline-icon-large">chevron_right</span>
-                {contentTranslations.relatedItems}
-              </Button>
-            </Row>
-            {/*<Row><p>{(doc[1][`text_${currentLang}_txt`]).toString().slice(0, 150) + "..."}</p></Row>*/}
-            <Row>
-              <p>{(doc[1][`text_${currentLang}_txt`])}</p>
-            </Row>
-            <Row>
-              <Button variant="light" className="left-button" size="lg" data-link="{doc[1].id}">
-                <span className="material-icons inline-icon-large">open_in_new</span>{contentTranslations.openInNewTab}
-              </Button>
-            </Row>
-          </Container>
+          <SingleResult doc={doc[1]} setSparqlData={setSparqlData} language={currentLang}/>
         );
       }
     };
@@ -145,12 +88,7 @@ const Search = () => {
           <p>{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
-          <InputGroup size="lg">
-            <FormControl aria-label="Large" aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={searchQuery}/>
-            <Button variant="primary" id="search-button" onClick={submitQuery}>
-              {contentTranslations.mainButton}
-            </Button>
-          </InputGroup>
+          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults}/>
 
         {/*Reference Guide*/}
           <p></p> 
