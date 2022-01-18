@@ -36,6 +36,7 @@ const QueryBox = (props) => {
     fetch(requestURL + new URLSearchParams({
         q:props.searchQuery,
         df:`text_${props.language}_txt`,
+        'q.op': "AND"
     }), {
       method: "GET",
       dataType: "JSON",
