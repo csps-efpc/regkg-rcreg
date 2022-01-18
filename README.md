@@ -33,4 +33,4 @@ For more information on running the front end, see the [Read Me](front-end/READM
 
 ## Schema information
 
-Information about the RDF schema used can be found in (the schema reference)[SCHEMA.md].
+Information about the RDF schema used can be found in [the schema reference](SCHEMA.md).
