@@ -19,3 +19,6 @@
 
 # Front-end outputs
 /front-end/target/
+
+# Optional environment file
+/front-end/.env
