@@ -18,6 +18,12 @@ Before running the scripts with the project, you must first download the require
 
 Run `npm install` to set up the project.
 
+## Environment Variables
+
+For development purposes it is possible to create a [dotenv](https://github.com/motdotla/dotenv) file, in the same top level folder as package.json.
+
+Add the variable `REACT_APP_API_PREFIX=https://example.com` where example.com is the hostname of the api. 
+
 ## Available Scripts
 
 In the project directory, you can run:
