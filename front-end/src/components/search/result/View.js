@@ -53,7 +53,6 @@ const View = (props) => {
       } else {
         window.open(data, '_blank').focus();
       }
-
     })
     .catch((error) => {
       console.log(error)
