@@ -25,14 +25,12 @@ const View = (props) => {
   }
 
   const submitSparqlURL = async(id) => {
-    /* Single search term: https://dev.handshape.com/sparql?query=SELECT%20*%20{%3Chttps://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6%3E%20%3Chttps://schema.org/url%3E%20?o}%20LIMIT%208&Accept=application/sparql-results%2Bjson */
-    const protocol = "https://";
-    //const currentHost = window.location.hostname;
-    const currentHost = "dev.handshape.com";
+    /* Single search term: https://example.com/sparql?query=SELECT%20*%20{%3Chttps://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6%3E%20%3Chttps://schema.org/url%3E%20?o}%20LIMIT%208&Accept=application/sparql-results%2Bjson */
+    const API_PREFIX = process.env.REACT_APP_API_PREFIX; // If prefix is set in environment variables, append to the request, otherwise use relative path
     const spaqrlPath = "/sparql?"
     const selectTerms = queryStringGenerator(id)
     const acceptTerms = `Accept=application/sparql-results+json`;
-    const requestURL = protocol + currentHost + spaqrlPath + selectTerms + "&Accept=application/sparql-results%2Bjson";
+    const requestURL = API_PREFIX + spaqrlPath + selectTerms + "&Accept=application/sparql-results%2Bjson";
 
     fetch(requestURL)
     .then((resp) => {
