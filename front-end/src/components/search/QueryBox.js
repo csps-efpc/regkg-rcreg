@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {FormattedMessage} from 'react-intl';
 import Button from "react-bootstrap/Button";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -24,14 +24,12 @@ import "../../style.css";
 const QueryBox = (props) => {
 
   const submitQuery = async() => {
-    /* Single search term: https://dev.handshape.com/search?df=text_en_txt&q=fish */
-    const protocol = "https://";
-    //const currentHost = window.location.hostname;
-    const currentHost = "dev.handshape.com";
+    /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
+    const API_PREFIX = process.env.REACT_APP_API_PREFIX; // If prefix is set in environment variables, append to the request, otherwise use relative path
     const solrPath = "/search?"
     const langTerms = `text_${props.language}_txt`;
     const searchTerms = `q=${props.searchQuery}`;
-    const requestURL = protocol + currentHost + solrPath;
+    const requestURL = API_PREFIX + solrPath;
 
     fetch(requestURL + new URLSearchParams({
         q:props.searchQuery,
@@ -43,6 +41,12 @@ const QueryBox = (props) => {
       headers: {
         "Content-Type": "application/json; charset=utf-8",
       }
+    })
+    .then((resp) => {   //fetch does not return non network errors, check for problems first!
+      if(!resp.ok){
+        throw Error(resp.statusText);
+      }
+      return resp;
     })
     .then((resp) => {
       return resp.json()
