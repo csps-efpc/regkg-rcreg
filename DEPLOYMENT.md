@@ -234,3 +234,19 @@ auth_basic "regkg-rcreg";
 auth_basic_user_file /etc/nginx/.htpasswd;
 proxy_set_header X-Forwarded-User $remote_user;
 ```
+
+The .htpasswd file is in the same format that Apache2 keeps password files. The easiest way to create a new user is to use Apache's utilities for just that purpose.
+
+If you've not yet got them locally, install the apache utils:
+```
+sudo apt-get install apache2-utils
+```
+To create a user named "fred":
+```
+sudo htpasswd -c /etc/nginx/.htpasswd fred
+```
+The CLI utility will prompt you for the password for the new user, and write the cryptographically-protected form of the password to the .htpasswd file.
+To remove a user, simply remove the line from the file that begins with the desired username:
+```
+fred:$apr1$ilgq7ZEO$OarDX15gjKAxuxzv0JTrO/
+```

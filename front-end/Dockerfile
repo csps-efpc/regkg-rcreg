@@ -11,6 +11,9 @@ WORKDIR "/home/app/"
 
 RUN npm install
 
+ARG REACT_APP_API_PREFIX ./
+ENV REACT_APP_API_PREFIX=$REACT_APP_API_PREFIX
+
 RUN npm run build
 
 FROM scratch  AS export-stage
