@@ -11,6 +11,8 @@ WORKDIR "/home/app/"
 
 RUN npm install
 
+ENV NODE_ENV=Production  
+
 RUN npm run build
 
 FROM scratch  AS export-stage
