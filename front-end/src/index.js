@@ -5,7 +5,6 @@ import {IntlProvider} from 'react-intl';
 import LanguageWrapper from "./components/lang/LanguageWrapper";
 import "./index.css"
 import 'bootstrap/dist/css/bootstrap.min.css';
-import 'dotenv/config';
 
 ReactDOM.render(
 	<LanguageWrapper>
