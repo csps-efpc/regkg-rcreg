@@ -102,7 +102,7 @@ const Search = () => {
           <p tabindex="0">{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
-          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults}/>
+          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
 
         {/*Reference Guide*/}
           <p></p> 
