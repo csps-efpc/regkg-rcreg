@@ -120,7 +120,7 @@ const QueryBox = (props) => {
       {show ? 
       <Alert variant="danger" onClose={() => setShow(false)} dismissible className="mt-2">
         <Alert.Heading><FormattedMessage id = "app.query.errorHeader" /></Alert.Heading>
-        <p tabindex="0">
+        <p tabIndex="0">
           <FormattedMessage id = {errorMessage} />
         </p>
       </Alert> : ""
