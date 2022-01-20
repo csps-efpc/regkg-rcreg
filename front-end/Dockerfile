@@ -11,7 +11,8 @@ WORKDIR "/home/app/"
 
 RUN npm install
 
-ENV NODE_ENV=Production  
+ARG REACT_APP_API_PREFIX ./
+ENV REACT_APP_API_PREFIX=$REACT_APP_API_PREFIX
 
 RUN npm run build
 
