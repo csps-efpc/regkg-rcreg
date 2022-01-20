@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {FormattedMessage} from 'react-intl';
 import Button from "react-bootstrap/Button";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -29,9 +29,7 @@ const QueryBox = (props) => {
 
   const submitQuery = async() => {
     /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
-
     const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");
-
     const solrPath = "/search?"
     const langTerms = `text_${props.language}_txt`;
     const searchTerms = `q=${props.searchQuery}`;
@@ -42,6 +40,7 @@ const QueryBox = (props) => {
     fetch(requestURL + new URLSearchParams({
         q:props.searchQuery,
         df:`text_${props.language}_txt`,
+        start:props.pageOffset,
         'q.op': "AND"
     }), {
       method: "GET",
@@ -86,6 +85,17 @@ const QueryBox = (props) => {
   const updateQuery = (e) => {
     props.setSearchQuery(e.target.value);
   }
+
+  // Used to skip the first render
+  const isInitialMount = useRef(true);
+  // Submit a new query whenever pageOffset updated by pagination
+  useEffect(() => {
+    if (isInitialMount.current) {
+       isInitialMount.current = false;
+    } else {
+        submitQuery();
+    }
+  }, [props.pageOffset]);
 
   return(
     <>
