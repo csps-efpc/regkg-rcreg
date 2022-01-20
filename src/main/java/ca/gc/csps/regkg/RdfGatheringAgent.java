@@ -774,9 +774,9 @@ public class RdfGatheringAgent {
     }
 
     /**
-     * Add the top orders-in-council to the given model and index. If the Acts &
-     * Regs are already in the model, they will be linked where the Act name
-     * matches.
+     * Add the top orders-in-council to the given model and index. If the Acts 
+     * &amp; Regs are already in the model, they will be linked where the Act 
+     * name matches.
      *
      * @param model the model to which the triples should be added
      * @param searchIndex the search index to which the text should be added.
