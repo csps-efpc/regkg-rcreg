@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {FormattedMessage} from 'react-intl';
 import Button from "react-bootstrap/Button";
 import InputGroup from "react-bootstrap/InputGroup";
@@ -40,6 +40,7 @@ const QueryBox = (props) => {
     fetch(requestURL + new URLSearchParams({
         q:props.searchQuery,
         df:`text_${props.language}_txt`,
+        start:props.pageOffset,
         'q.op': "AND"
     }), {
       method: "GET",
@@ -84,6 +85,17 @@ const QueryBox = (props) => {
   const updateQuery = (e) => {
     props.setSearchQuery(e.target.value);
   }
+
+  // Used to skip the first render
+  const isInitialMount = useRef(true);
+  // Submit a new query whenever pageOffset updated by pagination
+  useEffect(() => {
+    if (isInitialMount.current) {
+       isInitialMount.current = false;
+    } else {
+        submitQuery();
+    }
+  }, [props.pageOffset]);
 
   return(
     <>
