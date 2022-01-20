@@ -29,7 +29,9 @@ const QueryBox = (props) => {
 
   const submitQuery = async() => {
     /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
-    const API_PREFIX = process.env.REACT_APP_API_PREFIX; // If prefix is set in environment variables, append to the request, otherwise use relative path
+
+    const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");
+
     const solrPath = "/search?"
     const langTerms = `text_${props.language}_txt`;
     const searchTerms = `q=${props.searchQuery}`;

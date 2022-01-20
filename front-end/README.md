@@ -24,6 +24,11 @@ For development purposes it is possible to create a [dotenv](https://github.com/
 
 Add the variable `REACT_APP_API_PREFIX=https://example.com` where example.com is the hostname of the api. 
 
+You can also use a conventional environment variable, or inject one into your Docker build like so:
+
+`DOCKER_BUILDKIT=1 docker build --env REACT_APP_API_PREFIX=https://example.com --file Dockerfile --output build .`
+
+
 ## Available Scripts
 
 In the project directory, you can run:
