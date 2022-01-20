@@ -63,7 +63,6 @@ const Information = (props) =>{
     }) 
     .then((data) => {
       return data.results.bindings;
-
     })
     .then((data) => {
       const dataInCurrentLang = [];

@@ -28,6 +28,7 @@ You can also use a conventional environment variable, or inject one into your Do
 
 `DOCKER_BUILDKIT=1 docker build --env REACT_APP_API_PREFIX=https://example.com --file Dockerfile --output build .`
 
+
 ## Available Scripts
 
 In the project directory, you can run:
