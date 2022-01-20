@@ -82,8 +82,8 @@ public class RdfGatheringAgent {
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
     private static final String TITLE_FIELD_ENGLISH = "title_en_txt";
     private static final String TITLE_FIELD_FRENCH = "title_fr_txt";
-    private static final String LINK_FIELD_ENGLISH = "url_en_str";
-    private static final String LINK_FIELD_FRENCH = "url_fr_str";
+    private static final String LINK_FIELD_ENGLISH = "url_en_s";
+    private static final String LINK_FIELD_FRENCH = "url_fr_s";
 
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
