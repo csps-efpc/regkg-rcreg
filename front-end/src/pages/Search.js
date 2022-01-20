@@ -38,6 +38,11 @@ const Search = () => {
     setSparqlData("");
   }, [currentLang]);
 
+  // Clear the More Info Sparql Query when the search results are updated.
+  useEffect(() => {
+    setSparqlData("");
+  }, [searchResults]);
+
   const contentTranslations = {
     title : <FormattedMessage id = "app.search.title" />,
     mainButton : <FormattedMessage id = "app.search.mainButton" />,
@@ -56,7 +61,7 @@ const Search = () => {
     for (let doc of Object.entries(searchResults.docs)) {
       if(doc[1][`text_${currentLang}_txt`]){
         searchResultItems.push(
-          <SingleResult doc={doc[1]} setSparqlData={setSparqlData} language={currentLang}/>
+          <SingleResult doc={doc[1]} sparqlData={sparqlData} setSparqlData={setSparqlData} language={currentLang} key={doc[1].id}/>
         );
       }
     };
