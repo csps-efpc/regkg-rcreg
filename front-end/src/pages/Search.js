@@ -12,6 +12,7 @@ import logo from "../img/logo.svg";
 import Theme from "../components/Theme";
 import QueryBox from "../components/search/QueryBox";
 import SingleResult from "../components/search/result/SingleResult";
+import PaginationQuery from "../components/search/PaginationQuery";
 
 import {Context} from "../components/lang/LanguageWrapper";
 
@@ -31,11 +32,15 @@ const Search = () => {
   // had the Related Regulations button clicked
   const [sparqlData, setSparqlData] = useState("");
 
+  // Numeric value repsresenting offset for pagination
+  const [pageOffset, setPageOffset] = useState(0);
+
   // Clear the Search Query and Search Results when the language context is updated.
   useEffect(() => {
     setSearchQuery("");
     setsearchResults("");
     setSparqlData("");
+    setPageOffset(0);
   }, [currentLang]);
 
   // Clear the More Info Sparql Query when the search results are updated.
@@ -71,6 +76,10 @@ const Search = () => {
         <Row>
           {searchResultItems}
         </Row>
+        <Row>
+          {/*Search Box*/}
+          <PaginationQuery pageOffset={pageOffset} setPageOffset={setPageOffset} maxOffset={searchResults.numFound}/>
+        </Row>
       </Container>
 
     </>;
@@ -93,7 +102,7 @@ const Search = () => {
           <p>{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
-          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults}/>
+          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
 
         {/*Reference Guide*/}
           <p></p> 
