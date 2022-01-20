@@ -14,6 +14,7 @@ import QueryBox from "../components/search/QueryBox";
 import SingleResult from "../components/search/result/SingleResult";
 import PaginationQuery from "../components/search/PaginationQuery";
 
+
 import {Context} from "../components/lang/LanguageWrapper";
 
 
@@ -102,7 +103,7 @@ const Search = () => {
           <p>{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
-          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
+          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults}/>
 
         {/*Reference Guide*/}
           <p></p> 
