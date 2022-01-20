@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {FormattedMessage} from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import Button from "react-bootstrap/Button";
 /*
   Pages of Use: Search
@@ -20,6 +20,10 @@ import Button from "react-bootstrap/Button";
 */
 
 const Information = (props) =>{
+
+  const ariaTranslations = {
+    information : useIntl().formatMessage({id: "app.result.information"}),
+  }
 
   const predicates = [ // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
     //Regex for find: final PropertyImpl .* = new PropertyImpl\(
@@ -96,7 +100,7 @@ const Information = (props) =>{
 
   if(props.sparqlData[props.id]){
     moreInformationPanel = 
-    <span className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
+    <span tabindex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
       {/*
           Get all the keys for the sparqlData[props.id] object (which are predicates)
           For each predicate return a new <p> tag
@@ -111,7 +115,7 @@ const Information = (props) =>{
 
   return(
     <>
-      <Button variant="light" className="left-button" size="lg" onClick={() => submitSparqlRelated(props.id)}>
+      <Button aria-label={ariaTranslations.information} variant="light" className="left-button" size="lg" onClick={() => submitSparqlRelated(props.id)}>
         <span className="material-icons inline-icon-large">chevron_right</span><FormattedMessage id = "app.result.information" />
       </Button>
       {moreInformationPanel}

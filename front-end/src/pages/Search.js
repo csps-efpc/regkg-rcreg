@@ -54,7 +54,6 @@ const Search = () => {
     introduction : <FormattedMessage id = "app.search.introduction" />,
     advancedQueries : <FormattedMessage id = "app.search.advancedQueries" />,
     referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
-    searchLabel : <FormattedMessage id = "app.search.searchLabel" />,
     relatedItems : <FormattedMessage id = "app.result.related" />,
     openInNewTab : <FormattedMessage id = "app.result.link" />,
   }
@@ -93,13 +92,13 @@ const Search = () => {
         {/*Header*/}
         <Row className="">
           <Col>
-            <h1 className="header">{contentTranslations.title}</h1>
+            <h1 className="header" tabindex="0">{contentTranslations.title}</h1>
           </Col>
         </Row>
 
         {/*Introduction*/}
         <Row>
-          <p>{contentTranslations.introduction}</p>
+          <p tabindex="0">{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
           <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
