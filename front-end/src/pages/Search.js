@@ -93,13 +93,13 @@ const Search = () => {
         {/*Header*/}
         <Row className="">
           <Col>
-            <h1 className="header" tabindex="0">{contentTranslations.title}</h1>
+            <h1 className="header" tabIndex="0">{contentTranslations.title}</h1>
           </Col>
         </Row>
 
         {/*Introduction*/}
         <Row>
-          <p tabindex="0">{contentTranslations.introduction}</p>
+          <p tabIndex="0">{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
           <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>

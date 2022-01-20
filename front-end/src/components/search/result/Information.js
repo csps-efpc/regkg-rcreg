@@ -100,7 +100,7 @@ const Information = (props) =>{
 
   if(props.sparqlData[props.id]){
     moreInformationPanel = 
-    <span tabindex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
+    <span tabIndex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
       {/*
           Get all the keys for the sparqlData[props.id] object (which are predicates)
           For each predicate return a new <p> tag

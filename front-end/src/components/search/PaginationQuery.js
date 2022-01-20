@@ -29,13 +29,13 @@ const PaginationQuery = (props) => {
   }
 
   return(
-    <Pagination tabindex="0" aria-label={ariaTranslations.resultsControlsAria}>
+    <Pagination tabIndex="0" aria-label={ariaTranslations.resultsControlsAria}>
       {props.pageOffset > 9 ?
         <>
           <Pagination.First onClick={()=>{props.setPageOffset(0)}}/>
           <Pagination.Prev onClick={()=>{props.setPageOffset(prevState => prevState - 10)}}/>
           <Pagination.Item onClick={()=>{props.setPageOffset(prevState => prevState - 10)}}>{calculatedPageOffset() - 1}</Pagination.Item>
-          <Pagination.Item tabindex="0" active>{calculatedPageOffset()}</Pagination.Item>
+          <Pagination.Item tabIndex="0" active>{calculatedPageOffset()}</Pagination.Item>
         </>
         :
         <>
