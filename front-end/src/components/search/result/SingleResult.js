@@ -25,7 +25,7 @@ const SingleResult = (props) =>{
         <p tabindex="0">{(props.doc[`text_${props.language}_txt`])}</p>
       </Row>
       <Row>
-        <View id={props.doc.id} language={props.language}/>
+        <View id={props.doc.id} language={props.language} linktarget={props.doc[`url_${props.language}_s`]}/>
       </Row>
     </Container>
   );
