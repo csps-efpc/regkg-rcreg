@@ -1,5 +1,5 @@
 import React from "react";
-import {FormattedMessage} from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import Button from "react-bootstrap/Button";
 /*
   Pages of Use: Search
@@ -17,6 +17,10 @@ import Button from "react-bootstrap/Button";
 */
 
 const View = (props) => {
+
+  const ariaTranslations = {
+    link : useIntl().formatMessage({id: "app.result.link"}),
+  }
 
   const queryStringGenerator = (id) => {
     const querySign = "query=";
@@ -60,7 +64,7 @@ const View = (props) => {
   }
   
   return(
-    <Button variant="light" className="left-button" size="lg" onClick={() => submitSparqlURL(props.id)}>
+    <Button aria-label={ariaTranslations.link} variant="light" className="left-button" size="lg" onClick={() => submitSparqlURL(props.id)}>
       <span className="material-icons inline-icon-large">open_in_new</span><FormattedMessage id = "app.result.link" />
     </Button>
   );

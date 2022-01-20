@@ -1,26 +1,23 @@
 import React, { useState } from "react";
-import {FormattedMessage} from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import Pagination from 'react-bootstrap/Pagination'
 import "../../style.css";
 
 /*
   Pages of Use: Search
-  Description: Search box for new queries.
-  Uses and updates the parents SearchQuery state
+  Description: Pagination of search results
 
   Props:
-    searchQuery: state from Search which holds the value in the search box
-    setSearchQuery: function to update the searchQuery state
-
-    searchResults: state from Search which holds the return value from searching
-    setsearchResults: function to update the searchResults state
-
-    language: language code the UI is currently set to, ex: en, fr
-
+    props.maxOffset: The number of total results the query returns, ex 123
+    props.pageOffset: current search offset, base 0, ex 0 = page 1, 10 = page 2, 20 = page 3
+    props.setPageOffset: function to update the pageOffset, set it to any number
 */
 
 
 const PaginationQuery = (props) => {
+  const ariaTranslations = {
+    resultsControlsAria : useIntl().formatMessage({id: "app.search.resultsControlsAria"}),
+  }
   const calculatedMaxOffset = () =>{
     // convert from maximum number of items found to highest index to set it to
     return (Math.floor(props.maxOffset / 10) * 10);
@@ -32,13 +29,13 @@ const PaginationQuery = (props) => {
   }
 
   return(
-    <Pagination>
+    <Pagination tabindex="0" aria-label={ariaTranslations.resultsControlsAria}>
       {props.pageOffset > 9 ?
         <>
           <Pagination.First onClick={()=>{props.setPageOffset(0)}}/>
           <Pagination.Prev onClick={()=>{props.setPageOffset(prevState => prevState - 10)}}/>
           <Pagination.Item onClick={()=>{props.setPageOffset(prevState => prevState - 10)}}>{calculatedPageOffset() - 1}</Pagination.Item>
-          <Pagination.Item active>{calculatedPageOffset()}</Pagination.Item>
+          <Pagination.Item tabindex="0" active>{calculatedPageOffset()}</Pagination.Item>
         </>
         :
         <>

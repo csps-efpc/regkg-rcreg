@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import {FormattedMessage} from 'react-intl';
+import { FormattedMessage, useIntl } from 'react-intl';
 import Button from "react-bootstrap/Button";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
@@ -23,6 +23,11 @@ import "../../style.css";
 */
 
 const QueryBox = (props) => {
+
+  const ariaTranslations = {
+    searchBox : useIntl().formatMessage({id: "app.search.searchBoxAria"}),
+    submitButton : useIntl().formatMessage({id: "app.search.submitButtonAria"}),
+  }
 
   const [show, setShow] = useState(false);
   const [errorMessage, setErrorMessage] = useState("app.query.errorGeneric");
@@ -97,18 +102,25 @@ const QueryBox = (props) => {
     }
   }, [props.pageOffset]);
 
+  // For keyboard navigation
+  const handleKeyPress = (event) => {
+    if (event.key === "Enter") {
+      submitQuery();
+    }
+  }
+
   return(
     <>
       <InputGroup size="lg">
-        <FormControl aria-label="Large" aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={props.searchQuery}/>
-        <Button variant="primary" id="search-button" onClick={submitQuery}>
+        <FormControl aria-label={ariaTranslations.searchBox} aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={props.searchQuery} onKeyPress={handleKeyPress}/>
+        <Button aria-label={ariaTranslations.submitButton} variant="primary" id="search-button" onClick={submitQuery}>
           <FormattedMessage id = "app.search.mainButton" />
         </Button>
       </InputGroup>
       {show ? 
       <Alert variant="danger" onClose={() => setShow(false)} dismissible className="mt-2">
         <Alert.Heading><FormattedMessage id = "app.query.errorHeader" /></Alert.Heading>
-        <p>
+        <p tabindex="0">
           <FormattedMessage id = {errorMessage} />
         </p>
       </Alert> : ""
