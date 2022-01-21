@@ -49,7 +49,7 @@ const Information = (props) =>{
 
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id.split("#")[0] + encodeURIComponent("> ?p ?o} LIMIT 8")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id.split("#")[0] + encodeURIComponent("> ?p ?o}")
     return querySign + selectTerms;
   }
 
