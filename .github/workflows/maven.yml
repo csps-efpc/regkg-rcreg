@@ -30,6 +30,7 @@ jobs:
         path: |
           target/out.sqlite3
           target/out.ttl
+          target/site
 #    - name: Slack Notification
 #      uses: bryannice/gitactions-slack-notification@2.0.0
 #      env:
