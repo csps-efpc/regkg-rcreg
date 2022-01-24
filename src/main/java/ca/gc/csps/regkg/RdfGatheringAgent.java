@@ -71,12 +71,17 @@ public class RdfGatheringAgent {
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
+    private static final String ORG_ID_PREFIX = "https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/";
 
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2021/2021-09-30-c3/?-eng.html";
+
+    private static final String ACT_CLASS_URI = "https://canada.ca/ext/act-loi";
+    private static final String REG_CLASS_URI = "https://canada.ca/ext/regulation-reglement";
+    private static final String OIC_CLASS_URI = "https://canada.ca/ext/orderincouncil-decret";
 
     private static final String TEXT_FIELD_ENGLISH = "text_en_txt";
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
@@ -110,6 +115,7 @@ public class RdfGatheringAgent {
     final PropertyImpl departmentHeadProperty = new PropertyImpl("https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head");
     final PropertyImpl metadataLabelProperty = new PropertyImpl("https://www.csps-efpc.gc.ca/ext/instrument-references");
     final PropertyImpl legislationDateProperty = new PropertyImpl("https://schema.org/legislationDate");
+    final PropertyImpl rdfTypeProperty = new PropertyImpl("rdf:Type");
 
     /**
      * Recursively read turtle files into the given model.
@@ -262,7 +268,7 @@ public class RdfGatheringAgent {
         FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8);
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
         for (CSVRecord record : records) {
-            String resourceURI = "https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/" + record.get("ORG_ID").trim();
+            String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
             final Resource subject = ResourceFactory.createResource(resourceURI);
             StringBuilder textEn = new StringBuilder();
             StringBuilder textFr = new StringBuilder();
@@ -607,6 +613,8 @@ public class RdfGatheringAgent {
                 // The following two properties are language dependent -- we should do the same for French
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                        ResourceFactory.createResource(REG_CLASS_URI));
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         uniqueId, language);
                 statutoryInstrumentIds.add(uniqueId);
@@ -644,6 +652,8 @@ public class RdfGatheringAgent {
                 attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(actElement.getChildTextTrim("UniqueId")));
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                        ResourceFactory.createResource(ACT_CLASS_URI));
                 attributes.put("currentToDate", actElement.getChildTextTrim("CurrentToDate"));
                 if (actElement.getChild("RegsMadeUnderAct") != null) {
                     for (Element reg : actElement.getChild("RegsMadeUnderAct").getChildren("Reg")) {
@@ -651,6 +661,8 @@ public class RdfGatheringAgent {
                         Map<String, String> regAttributes = regIdToAttributes.get(regUniqueId);
                         model.add(ResourceFactory.createResource(regAttributes.get("instrumentURI")), enablingActProperty,
                                 ResourceFactory.createResource(attributes.get("instrumentURI")));
+                        model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                                ResourceFactory.createResource(REG_CLASS_URI));
                         model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), enablesRegProperty,
                                 ResourceFactory.createResource(regAttributes.get("instrumentURI")));
                     }
@@ -774,8 +786,8 @@ public class RdfGatheringAgent {
     }
 
     /**
-     * Add the top orders-in-council to the given model and index. If the Acts 
-     * &amp; Regs are already in the model, they will be linked where the Act 
+     * Add the top orders-in-council to the given model and index. If the Acts
+     * &amp; Regs are already in the model, they will be linked where the Act
      * name matches.
      *
      * @param model the model to which the triples should be added
@@ -851,6 +863,8 @@ public class RdfGatheringAgent {
 
                 model.add(subject, legislationDateProperty, date, XSDDateType.XSDdate);
                 model.add(subject, legislationIdentifierProperty, id);
+                model.add(subject, rdfTypeProperty,
+                        ResourceFactory.createResource(OIC_CLASS_URI));
                 model.add(subject, nameProperty, name, "en");
                 Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
                 index.put(TEXT_FIELD_ENGLISH, precis);
@@ -908,7 +922,7 @@ public class RdfGatheringAgent {
                 //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
             }
         }
-        
+
     }
 
     private class RdfParsingErrorHandler implements ErrorHandler {
