@@ -21,6 +21,7 @@
     "app.search.advancedQueries": "If you would like to learn about advanced queries, here is a ",
     "app.search.referenceGuide": "reference guide.",
     "app.search.searchLabel": "Search Terms",
+    "app.search.resultCount": "Search Results",
   	"app.search.searchBoxAria" : "Type Search Terms",
     "app.search.submitButtonAria" : "Submit Search",
     "app.search.resultsControlsAria" : "Search Results Page Control",
