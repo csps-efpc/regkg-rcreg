@@ -250,3 +250,41 @@ To remove a user, simply remove the line from the file that begins with the desi
 ```
 fred:$apr1$ilgq7ZEO$OarDX15gjKAxuxzv0JTrO/
 ```
+
+Some development teams prefer to stand up shared instances of SOLR and Fuseki to simplify the workng environments of front-end developers.
+If you do this, you'll need to enable cross-site requests to your shared instances. For each service that you want to share you'll have to update the sections like so:
+```
+location /sparql {
+    proxy_pass http://localhost:3030/name/sparql;
+    proxy_hide_header 'Access-Control-Allow-Origin';
+
+    if ($request_method = 'OPTIONS') {
+        add_header 'Access-Control-Allow-Origin' '*';
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+        #
+        # Custom headers and headers various browsers *should* be OK with but aren't
+        #
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+        #
+        # Tell client that this pre-flight info is valid for 20 days
+        #
+        add_header 'Access-Control-Max-Age' 1728000;
+        add_header 'Content-Type' 'text/plain; charset=utf-8';
+        add_header 'Content-Length' 0;
+        return 204;
+     }
+     if ($request_method = 'POST') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+     }
+     if ($request_method = 'GET') {
+        add_header 'Access-Control-Allow-Origin' '*' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'DNT,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range';
+        add_header 'Access-Control-Expose-Headers' 'Content-Length,Content-Range' always;
+     }
+}
+```
+Don't do this in production unless you really, really know what you're doing.
