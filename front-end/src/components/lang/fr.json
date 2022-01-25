@@ -21,6 +21,7 @@
     "app.search.advancedQueries": "Si vous voulez en apprendre plus sur les requêtes avancées, voici un ",
     "app.search.referenceGuide": "guide de référence. (Anglais)",
     "app.search.searchLabel": "Termes De Recherche",
+    "app.search.resultCount": "Résultats de recherche",
   	"app.search.searchBoxAria" : "Saisissez les termes de recherche",
   	"app.search.submitButtonAria" : "Soumettre la recherche",
   	"app.search.resultsControlsAria" : "Contrôle de la page des résultats de recherche",
