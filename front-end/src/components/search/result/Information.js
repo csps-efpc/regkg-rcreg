@@ -46,6 +46,7 @@ const Information = (props) =>{
   ]
 
   const [moreInfo, setMoreInfo] = useState();
+  const [showInfo, setShowInfo] = useState(false);
 
   const queryStringGenerator = (id) => {
     const querySign = "query=";
@@ -96,6 +97,29 @@ const Information = (props) =>{
 
   }
 
+  const toggleInformationPanel = () => {
+    /*
+      This function will be used to switch between three states that the
+      component can be in.
+      1) sparqlData is undefined (first show)
+          -> fetch from sparql
+          -> show panel after return
+      2) sparqlData filled, showInfo true (closing panel)
+          -> close panel, make showInfo false
+      3) sparqlData filled, showInfo false (opening panel 2nd time)
+          -> open panel, make showInfo true
+    */
+    if(!props.sparqlData[props.id]){
+      submitSparqlRelated(props.id)
+      .then(() => {
+        setShowInfo(true);
+      })
+    }
+    else if (props.sparqlData[props.id]){
+      setShowInfo(prevShowInfo => !prevShowInfo);
+    }
+  }
+
   let moreInformationPanel = "";
 
   if(props.sparqlData[props.id]){
@@ -115,10 +139,16 @@ const Information = (props) =>{
 
   return(
     <>
-      <Button aria-label={ariaTranslations.information} variant="light" className="left-button" size="lg" onClick={() => submitSparqlRelated(props.id)}>
-        <span className="material-icons inline-icon-large">chevron_right</span><FormattedMessage id = "app.result.information" />
+      <Button aria-label={ariaTranslations.information} variant="light" className="left-button" size="lg" onClick={() => toggleInformationPanel()}>
+        {showInfo ? 
+          <><span className="material-icons inline-icon-large">expand_less</span><FormattedMessage id = "app.result.information" /></> :
+          <><span className="material-icons inline-icon-large">expand_more</span><FormattedMessage id = "app.result.information" /></>
+        }
       </Button>
-      {moreInformationPanel}
+      {showInfo ? 
+        "" :
+        moreInformationPanel
+      }
     </>
   );
 }
