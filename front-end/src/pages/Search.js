@@ -23,9 +23,6 @@ const Search = () => {
   const langContext = useContext(Context);
   const currentLang = langContext.locale;
 
-  // String containing what the user has put in the search box
-  const [searchQuery, setSearchQuery] = useState("");
-
   // Array of object from the search API, no extra data
   const [searchResults, setsearchResults] = useState("");
 
@@ -38,7 +35,6 @@ const Search = () => {
 
   // Clear the Search Query and Search Results when the language context is updated.
   useEffect(() => {
-    setSearchQuery("");
     setsearchResults("");
     setSparqlData("");
     setPageOffset(0);
@@ -106,7 +102,7 @@ const Search = () => {
           <p tabIndex="0">{contentTranslations.introduction}</p>
 
           {/*Search Box*/}
-          <QueryBox language={currentLang} searchQuery={searchQuery} setSearchQuery={setSearchQuery} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
+          <QueryBox language={currentLang} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset}/>
 
         {/*Reference Guide*/}
           <p></p> 
