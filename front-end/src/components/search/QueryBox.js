@@ -33,11 +33,15 @@ const QueryBox = (props) => {
   const [errorMessage, setErrorMessage] = useState("app.query.errorGeneric");
 
   // String containing what the user has put in the search box
+  const [userSearchValue, setUserSearchValue] = useState("");
+
+  // String containing what to send to the API (updated on key or button press)
   const [searchQuery, setSearchQuery] = useState("");
+
 
   // Clear the Search Query and Search Results when the language context is updated.
   useEffect(() => {
-    setSearchQuery("");
+    setUserSearchValue("");
   }, [props.language]);
 
   const submitQuery = async() => {
@@ -96,15 +100,15 @@ const QueryBox = (props) => {
   }
 
   const updateQuery = (e) => {
-    setSearchQuery(e.target.value);
+    setUserSearchValue(e.target.value);
   }
 
   // Used to skip the first render
-  const isInitialMount = useRef(true);
+  const skipOffsetQuery = useRef(true);
   // Submit a new query whenever pageOffset updated by pagination
   useEffect(() => {
-    if (isInitialMount.current) {
-       isInitialMount.current = false;
+    if (skipOffsetQuery.current) {
+       skipOffsetQuery.current = false;
     } else {
         submitQuery();
     }
@@ -113,15 +117,26 @@ const QueryBox = (props) => {
   // For keyboard navigation
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
-      submitQuery();
+      processQueryForSubmit();
     }
   }
+
+  //
+  const processQueryForSubmit = () => {
+    props.setPageOffset(0);
+    setSearchQuery(userSearchValue);
+    // Updateing SearchQuery will trigger useEffect(() => {submitQuery()}, [searchQuery])
+  }
+
+  // Used to skip the first render
+  const isInitialMountQuery = useRef(true);
+  useEffect(() => {isInitialMountQuery.current ? isInitialMountQuery.current = false : submitQuery()}, [searchQuery])
 
   return(
     <>
       <InputGroup size="lg">
-        <FormControl aria-label={ariaTranslations.searchBox} aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={searchQuery} onKeyPress={handleKeyPress}/>
-        <Button aria-label={ariaTranslations.submitButton} variant="primary" id="search-button" onClick={submitQuery}>
+        <FormControl aria-label={ariaTranslations.searchBox} aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={userSearchValue} onKeyPress={handleKeyPress}/>
+        <Button aria-label={ariaTranslations.submitButton} variant="primary" id="search-button" onClick={processQueryForSubmit}>
           <FormattedMessage id = "app.search.mainButton" />
         </Button>
       </InputGroup>
