@@ -52,14 +52,24 @@ These are all speculative. Your mileage may vary, etc.
 this namespace are Canadian statutory instruments. The namespace is suffixed 
 with the identifier given to the instrument under the Statutory Instruments 
 Regulations ( https://laws-lois.justice.gc.ca/eng/regulations/C.R.C.,_c._1509/FullText.html )
-Sections 5 and 6. Where the regulations around setting identifiers are 
-inconsistent between the English and French versions of the Act (ie. Section 
-5(b)), the specification in the English text is used for the purposes of 
-establishing a unique identifier. Where identifiers contain `/` characters, a 
-dash `-` is substituted. Where identifiers contain spaces, an underscore `_` is 
-substituted. These substitutions are made to resolve regulation ID conflicts 
-with the URI schema defined in RFC3986. 
+Sections 5 and 6. Where the regulations (or practices) around setting 
+identifiers are inconsistent between the English and French versions of the Act 
+(ie. Section 5(b)), the specification in the English text is used for the 
+purposes of establishing a unique identifier. Where identifiers contain `/` 
+characters, a dash `-` is substituted. Where identifiers contain spaces, an 
+underscore `_` is substituted. These substitutions are made to resolve 
+regulation ID conflicts with the URI schema defined in RFC3986. 
 
 * https://orders-in-council.canada.ca/ - entities in this namespace are 
 Canadian orders-in-council. The namespace is suffixed with the numeric 
 identifier of the order-in-council, unmodified.
+
+* https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/ - entities in this namespace are 
+organizations within the canadian federal government. The namespace is suffixed 
+with the immutable PWGSC financial ID of the organization.
+
+## RDF Types
+
+* https://canada.ca/ext/act-loi - A Canadian act of law. Subclass of https://schema.org/Legislation
+* https://canada.ca/ext/regulation-reglement A Canadian federal regulation. Subclass of https://schema.org/Legislation
+* https://canada.ca/ext/orderincouncil-decret A Canadian Order-In-Council as enacted by the Governor-In Council. Subclass of https://schema.org/Legislation

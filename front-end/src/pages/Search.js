@@ -57,6 +57,7 @@ const Search = () => {
     referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
     relatedItems : <FormattedMessage id = "app.result.related" />,
     openInNewTab : <FormattedMessage id = "app.result.link" />,
+    resultCount : <FormattedMessage id = "app.search.resultCount" />,
   }
 
   let searchResultJSX = "";
@@ -72,7 +73,10 @@ const Search = () => {
     };
     searchResultJSX = <>
       <hr/>
-      <Container className="p-5 mb-4 bg-light rounded-3">
+      <Container className="px-5 pb-5 pt-3 mb-4 bg-light rounded-3">
+        <Row>
+          <p>{searchResults.numFound} {contentTranslations.resultCount}</p>
+        </Row>
         <Row>
           {searchResultItems}
         </Row>

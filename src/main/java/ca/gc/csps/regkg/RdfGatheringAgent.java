@@ -71,12 +71,21 @@ public class RdfGatheringAgent {
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
+    private static final String ORG_ID_PREFIX = "https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/";
 
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
-            = "https://canadagazette.gc.ca/rp-pr/p2/2020/2020-12-31-c4/?-eng.html";
+            = "https://canadagazette.gc.ca/rp-pr/p2/2021/2021-09-30-c3/?-eng.html";
+
+    private static final String ACT_CLASS_URI = "https://canada.ca/ext/act-loi";
+    private static final String REG_CLASS_URI = "https://canada.ca/ext/regulation-reglement";
+    private static final String OIC_CLASS_URI = "https://canada.ca/ext/orderincouncil-decret";
+
+    private static final String ACT_TYPE_VALUE = "act";
+    private static final String REG_TYPE_VALUE = "regulation";
+    private static final String OIC_TYPE_VALUE = "oic";
 
     private static final String TEXT_FIELD_ENGLISH = "text_en_txt";
     private static final String TEXT_FIELD_FRENCH = "text_fr_txt";
@@ -84,6 +93,7 @@ public class RdfGatheringAgent {
     private static final String TITLE_FIELD_FRENCH = "title_fr_txt";
     private static final String LINK_FIELD_ENGLISH = "url_en_s";
     private static final String LINK_FIELD_FRENCH = "url_fr_s";
+    private static final String TYPE_FIELD = "type_s";
 
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
@@ -110,6 +120,7 @@ public class RdfGatheringAgent {
     final PropertyImpl departmentHeadProperty = new PropertyImpl("https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head");
     final PropertyImpl metadataLabelProperty = new PropertyImpl("https://www.csps-efpc.gc.ca/ext/instrument-references");
     final PropertyImpl legislationDateProperty = new PropertyImpl("https://schema.org/legislationDate");
+    final PropertyImpl rdfTypeProperty = new PropertyImpl("rdf:Type");
 
     /**
      * Recursively read turtle files into the given model.
@@ -262,7 +273,7 @@ public class RdfGatheringAgent {
         FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8);
         Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
         for (CSVRecord record : records) {
-            String resourceURI = "https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/" + record.get("ORG_ID").trim();
+            String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
             final Resource subject = ResourceFactory.createResource(resourceURI);
             StringBuilder textEn = new StringBuilder();
             StringBuilder textFr = new StringBuilder();
@@ -530,7 +541,7 @@ public class RdfGatheringAgent {
         return doc;
     }
 
-    private void addLimsSectionToIndex(Namespace limsNamespace, Element section, final Resource instrumentURI, Map<String, Map<String, String>> searchIndex, String textField, String titleField, String shortTitle, String urlString, String linkField) {
+    private void addLimsSectionToIndex(Namespace limsNamespace, Element section, final Resource instrumentURI, Map<String, Map<String, String>> searchIndex, String textField, String titleField, String shortTitle, String urlString, String linkField, String type) {
         if (limsNamespace != null) {
             String limsId = section.getAttributeValue("id", limsNamespace);
             if (limsId != null) {
@@ -538,6 +549,7 @@ public class RdfGatheringAgent {
                 Map<String, String> sectionindex = searchIndex.getOrDefault(sectionURI, new HashMap<String, String>());
                 sectionindex.put(textField, collectTextFrom(section).toString());
                 sectionindex.put(titleField, shortTitle);
+                sectionindex.put(TYPE_FIELD, type);
                 if (urlString != null) {
                     sectionindex.put(linkField, urlString + "#" + limsId);
                 }
@@ -607,6 +619,10 @@ public class RdfGatheringAgent {
                 // The following two properties are language dependent -- we should do the same for French
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                        ResourceFactory.createResource(REG_CLASS_URI));
+                attributes.put(TYPE_FIELD, REG_TYPE_VALUE);
+
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), legislationIdentifierProperty,
                         uniqueId, language);
                 statutoryInstrumentIds.add(uniqueId);
@@ -644,6 +660,9 @@ public class RdfGatheringAgent {
                 attributes.put("instrumentURI", STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(actElement.getChildTextTrim("UniqueId")));
                 model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), urlProperty,
                         url, language);
+                model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                        ResourceFactory.createResource(ACT_CLASS_URI));
+                attributes.put(TYPE_FIELD, ACT_TYPE_VALUE);
                 attributes.put("currentToDate", actElement.getChildTextTrim("CurrentToDate"));
                 if (actElement.getChild("RegsMadeUnderAct") != null) {
                     for (Element reg : actElement.getChild("RegsMadeUnderAct").getChildren("Reg")) {
@@ -651,6 +670,9 @@ public class RdfGatheringAgent {
                         Map<String, String> regAttributes = regIdToAttributes.get(regUniqueId);
                         model.add(ResourceFactory.createResource(regAttributes.get("instrumentURI")), enablingActProperty,
                                 ResourceFactory.createResource(attributes.get("instrumentURI")));
+                        model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
+                                ResourceFactory.createResource(REG_CLASS_URI));
+                        regAttributes.put(TYPE_FIELD, REG_TYPE_VALUE);
                         model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), enablesRegProperty,
                                 ResourceFactory.createResource(regAttributes.get("instrumentURI")));
                     }
@@ -732,21 +754,30 @@ public class RdfGatheringAgent {
         return words.length;
     }
 
-    private void indexConsolidatedInstrument(Document engDoc, Model model, Resource instrumentURI, String instrumentId, Map<String, Map<String, String>> searchIndex, String lang, String url) {
+    private void indexConsolidatedInstrument(Document doc, Model model, Resource instrumentURI, String instrumentId, Map<String, Map<String, String>> searchIndex, String lang, String url) {
         Namespace limsNamespace = null;
-        for (Namespace ns : engDoc.getRootElement().getAdditionalNamespaces()) {
+        for (Namespace ns : doc.getRootElement().getAdditionalNamespaces()) {
             if (ns.getURI().equals("http://justice.gc.ca/lims")) {
                 limsNamespace = ns;
+            }
+        }
+        String type = null;
+        org.apache.jena.rdf.model.Statement typeStatement = model.getProperty(instrumentURI, rdfTypeProperty);
+        if (typeStatement != null) {
+            if (typeStatement.getResource().getURI().equals(ACT_CLASS_URI)) {
+                type = ACT_TYPE_VALUE;
+            } else if (typeStatement.getResource().getURI().equals(REG_CLASS_URI)) {
+                type = REG_TYPE_VALUE;
             }
         }
         final String textFieldName = lang.equals("fr") ? TEXT_FIELD_FRENCH : TEXT_FIELD_ENGLISH;
         final String titleFieldName = lang.equals("fr") ? TITLE_FIELD_FRENCH : TITLE_FIELD_ENGLISH;
         final String linkFieldName = lang.equals("fr") ? LINK_FIELD_FRENCH : LINK_FIELD_ENGLISH;
-        String text = collectTextFrom(engDoc.getRootElement()).toString();
+        String text = collectTextFrom(doc.getRootElement()).toString();
         int wordCount = countWordsIn(text);
         model.add(instrumentURI, wordCountProperty, String.valueOf(wordCount), lang);
         String title = instrumentId;
-        Element identification = engDoc.getRootElement().getChild("Identification");
+        Element identification = doc.getRootElement().getChild("Identification");
         if (identification != null) {
             title = identification.getChildTextNormalize("ShortTitle");
             if (title == null) {
@@ -766,16 +797,16 @@ public class RdfGatheringAgent {
             }
             searchIndex.put(instrumentURI.getURI(), index);
         }
-        if (engDoc.getRootElement().getChild("Body") != null) {
-            for (Element section : engDoc.getRootElement().getChild("Body").getChildren("Section")) {
-                addLimsSectionToIndex(limsNamespace, section, instrumentURI, searchIndex, textFieldName, titleFieldName, title, url, linkFieldName);
+        if (doc.getRootElement().getChild("Body") != null) {
+            for (Element section : doc.getRootElement().getChild("Body").getChildren("Section")) {
+                addLimsSectionToIndex(limsNamespace, section, instrumentURI, searchIndex, textFieldName, titleFieldName, title, url, linkFieldName, type);
             }
         }
     }
 
     /**
-     * Add the top orders-in-council to the given model and index. If the Acts 
-     * &amp; Regs are already in the model, they will be linked where the Act 
+     * Add the top orders-in-council to the given model and index. If the Acts
+     * &amp; Regs are already in the model, they will be linked where the Act
      * name matches.
      *
      * @param model the model to which the triples should be added
@@ -851,8 +882,12 @@ public class RdfGatheringAgent {
 
                 model.add(subject, legislationDateProperty, date, XSDDateType.XSDdate);
                 model.add(subject, legislationIdentifierProperty, id);
+                model.add(subject, rdfTypeProperty,
+                        ResourceFactory.createResource(OIC_CLASS_URI));
+
                 model.add(subject, nameProperty, name, "en");
                 Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
+                index.put(TYPE_FIELD, OIC_TYPE_VALUE);
                 index.put(TEXT_FIELD_ENGLISH, precis);
                 index.put(TITLE_FIELD_ENGLISH, name);
                 if (url != null) {
@@ -908,7 +943,7 @@ public class RdfGatheringAgent {
                 //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
             }
         }
-        
+
     }
 
     private class RdfParsingErrorHandler implements ErrorHandler {

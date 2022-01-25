@@ -1,3 +1,5 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 @prefix justice: <https://laws-lois.justice.gc.ca/ext/> .
 @prefix pco: <https://www.canada.ca/en/privy-council/ext/> .
 @prefix inst: <https://www.canada.ca/en/privy-council/ext/statutory-instrument/> .
@@ -8,7 +10,14 @@
 @prefix rias: <https://www.gazette.gc.ca/ext/> .
 @prefix csps: <https://www.csps-efpc.gc.ca/ext/> .
 @prefix oic: <https://orders-in-council.canada.ca/> .
-    
+@prefix ca: <https://canada.ca/ext/>
+
+# Anchor our schema declaration to schema.org types
+
+ca:act-loi rdfs:subClassOf schema:Legislation .
+ca:regulation-reglement rdfs:subClassOf schema:Legislation .
+ca:orderincouncil-decret rdfs:subClassOf schema:Legislation .
+
 # Inline triples can be expressed like:
 # inst:F-14 app:affects naics:11411 .
 # inst:F-14 app:not-affects naics:541514 .
