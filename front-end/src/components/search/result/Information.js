@@ -146,8 +146,8 @@ const Information = (props) =>{
         }
       </Button>
       {showInfo ? 
-        "" :
-        moreInformationPanel
+        moreInformationPanel:
+        ""
       }
     </>
   );
