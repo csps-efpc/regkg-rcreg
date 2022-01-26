@@ -32,18 +32,30 @@ const QueryBox = (props) => {
   const [show, setShow] = useState(false);
   const [errorMessage, setErrorMessage] = useState("app.query.errorGeneric");
 
+  // String containing what the user has put in the search box
+  const [userSearchValue, setUserSearchValue] = useState("");
+
+  // String containing what to send to the API (updated on key or button press)
+  const [searchQuery, setSearchQuery] = useState("");
+
+
+  // Clear the Search Query and Search Results when the language context is updated.
+  useEffect(() => {
+    setUserSearchValue("");
+  }, [props.language]);
+
   const submitQuery = async() => {
     /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
     const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");
     const solrPath = "/search?"
     const langTerms = `text_${props.language}_txt`;
-    const searchTerms = `q=${props.searchQuery}`;
+    const searchTerms = `q=${searchQuery}`;
     const requestURL = API_PREFIX + solrPath;
 
     setShow(false);
 
     fetch(requestURL + new URLSearchParams({
-        q:props.searchQuery,
+        q:searchQuery,
         df:`text_${props.language}_txt`,
         start:props.pageOffset,
         'q.op': "AND"
@@ -88,15 +100,15 @@ const QueryBox = (props) => {
   }
 
   const updateQuery = (e) => {
-    props.setSearchQuery(e.target.value);
+    setUserSearchValue(e.target.value);
   }
 
   // Used to skip the first render
-  const isInitialMount = useRef(true);
+  const skipOffsetQuery = useRef(true);
   // Submit a new query whenever pageOffset updated by pagination
   useEffect(() => {
-    if (isInitialMount.current) {
-       isInitialMount.current = false;
+    if (skipOffsetQuery.current) {
+       skipOffsetQuery.current = false;
     } else {
         submitQuery();
     }
@@ -105,15 +117,26 @@ const QueryBox = (props) => {
   // For keyboard navigation
   const handleKeyPress = (event) => {
     if (event.key === "Enter") {
-      submitQuery();
+      processQueryForSubmit();
     }
   }
+
+  //
+  const processQueryForSubmit = () => {
+    props.setPageOffset(0);
+    setSearchQuery(userSearchValue);
+    // Updateing SearchQuery will trigger useEffect(() => {submitQuery()}, [searchQuery])
+  }
+
+  // Used to skip the first render
+  const isInitialMountQuery = useRef(true);
+  useEffect(() => {isInitialMountQuery.current ? isInitialMountQuery.current = false : submitQuery()}, [searchQuery])
 
   return(
     <>
       <InputGroup size="lg">
-        <FormControl aria-label={ariaTranslations.searchBox} aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={props.searchQuery} onKeyPress={handleKeyPress}/>
-        <Button aria-label={ariaTranslations.submitButton} variant="primary" id="search-button" onClick={submitQuery}>
+        <FormControl aria-label={ariaTranslations.searchBox} aria-describedby="inputGroup-sizing-lg" onChange={updateQuery} value={userSearchValue} onKeyPress={handleKeyPress}/>
+        <Button aria-label={ariaTranslations.submitButton} variant="primary" id="search-button" onClick={processQueryForSubmit}>
           <FormattedMessage id = "app.search.mainButton" />
         </Button>
       </InputGroup>
