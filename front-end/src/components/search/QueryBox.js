@@ -51,12 +51,20 @@ const QueryBox = (props) => {
     setUserSearchValue("");
   }, [props.language]);
 
+  // Reset states before navigation to opposite language search path
+  useEffect(() => {
+    props.setPageOffset(0);    
+    props.setsearchResults("");
+    setSearchQuery("");
+    setUserSearchValue("");
+  }, [props.language]);
+
   // This is called when the search button is pressed.
   // Therefore, reset results and pagination, then navigate to the new search query
   // Since there is a searchParameterUrl within the route "/search/:searchParameterUrl" this will get caught and set the searchQuery state.
   const processQueryForSubmit = () => {
     props.setPageOffset(0);
-    navigate("../../../" + props.language + "/search/" + userSearchValue);
+    navigate("../../../" + props.language + "/search/" + userSearchValue + "/" + ((props.pageOffset / 10) + 1));
   }
 
   //When the search query is updated, if it is not null, submit it to API
@@ -144,6 +152,7 @@ const QueryBox = (props) => {
     if (skipOffsetQuery.current) {
        skipOffsetQuery.current = false;
     } else {
+        navigate("../../../" + props.language + "/search/" + userSearchValue + "/" + ((props.pageOffset / 10) + 1));
         submitQuery();
     }
   }, [props.pageOffset]);
