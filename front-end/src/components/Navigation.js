@@ -46,12 +46,12 @@ const Navigation = () => {
     if(navbarLang == "en"){
       setNavbarLang("fr");
       context.selectLanguage("fr");
-      navigate(location.pathname.replace("en", "fr"));
+      navigate(location.pathname.replace("/en/", "/fr/"));
     }
     else{
       setNavbarLang("en");
       context.selectLanguage("en");
-      navigate(location.pathname.replace("fr", "en"));
+      navigate(location.pathname.replace("/fr/", "/en/"));
     }
   }
 
