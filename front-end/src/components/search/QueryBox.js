@@ -56,7 +56,7 @@ const QueryBox = (props) => {
   // Since there is a searchParameterUrl within the route "/search/:searchParameterUrl" this will get caught and set the searchQuery state.
   const processQueryForSubmit = () => {
     props.setPageOffset(0);
-    navigate("/" + props.language + "/search/" + userSearchValue);
+    navigate("../../../" + props.language + "/search/" + userSearchValue);
   }
 
   //When the search query is updated, if it is not null, submit it to API
