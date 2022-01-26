@@ -53,7 +53,7 @@ public class IntegrationTest {
         Model model = ModelFactory.createDefaultModel();
         RdfGatheringAgent agent = new RdfGatheringAgent();
         // Add local facts and prefixes to the model.
-        boolean pass = agent.fetchAndParseLocalTurtle(new File("rdf"), model);
+        boolean pass = agent.fetchAndParseLocalTriples(new File("rdf"), model);
 
 
         // Try to pull the latest Acts & Regs from GitHub

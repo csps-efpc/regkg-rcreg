@@ -1,0 +1,5 @@
+test1:,https://schema.org/name,https://schema.org/url,custom:rank,test1:ext/loop
+"eenie","The OG","https://www.youtube.com/watch?v=dQw4w9WgXcQ",1,"test1:meenie"
+"meenie","Trololo","https://www.youtube.com/watch?v=oavMtUWDBTM",2,"test1:mynie"
+"mynie","Perfect neutrality","https://www.youtube.com/watch?v=ussCHoQttyQ",3,"test1:moe"
+"moe","Coffin Dance","https://www.youtube.com/watch?v=j9V78UbdzWI",4,"test1:eenie"
