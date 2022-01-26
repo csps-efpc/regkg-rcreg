@@ -11,7 +11,7 @@ const App = () => {
     return(
       <Routes>
         <Route path="" element={<Search />}></Route>
-        <Route path=":searchParameterUrl" element={<Search />}></Route>
+        <Route path=":searchParameterUrl/:paginationOffsetUrl" element={<Search />}></Route>
       </Routes>
     )
   } 
