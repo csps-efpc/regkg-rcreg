@@ -6,7 +6,15 @@ import {Context} from "./components/lang/LanguageWrapper";
 
 const App = () => {  
   const context = useContext(Context);
-  
+
+  const SearchRoute = () => {
+    return(
+      <Routes>
+        <Route path="" element={<Search />}></Route>
+        <Route path=":searchParameterUrl" element={<Search />}></Route>
+      </Routes>
+    )
+  } 
   const EnglishRoute = () => {
     useEffect(() => {
       context.selectLanguage("en");
@@ -14,8 +22,7 @@ const App = () => {
     return(
       <Routes>
         <Route path="" element={<Home />}></Route>
-        <Route path="search" element={<Search />}></Route>
-        <Route path="search/:searchQuery" element={<Search />}></Route>
+        <Route path="search/*" element={<SearchRoute />}></Route>
       </Routes>
     )
   }
@@ -26,12 +33,10 @@ const App = () => {
     return(
       <Routes>
         <Route path="" element={<Home />}></Route>
-        <Route path="search" element={<Search />}></Route>
-        <Route path="search/:searchQuery" element={<Search />}></Route>
+        <Route path="search/*" element={<SearchRoute />}></Route>
       </Routes>
     )
   }
-
   return(
     <BrowserRouter>
       <Routes >
