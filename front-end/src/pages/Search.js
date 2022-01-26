@@ -33,13 +33,19 @@ const Search = () => {
   const { paginationOffsetUrl } = useParams();
 
   // Numeric value repsresenting offset for pagination
-  const [pageOffset, setPageOffset] = useState((paginationOffsetUrl ? ((paginationOffsetUrl - 1) * 10) : 0));
+  const [pageOffset, setPageOffset] = useState(0);
 
   // Catch an update to searchParameterUrl
   // Set the correct states (UI view, and what is sent to API)
+  const isValidNumeric = (str) =>{
+    if (typeof str != "string") return false; // strings only
+    if (isNaN(str)) return false; // is not a string value representing number
+    return Number.isInteger(parseFloat(str));//    Number.isInteger(+ str);
+  }
+
   useEffect(() => {
-    if(paginationOffsetUrl){
-      setPageOffset((paginationOffsetUrl - 1) * 10);
+    if(paginationOffsetUrl && isValidNumeric(paginationOffsetUrl)){
+      setPageOffset((parseInt(paginationOffsetUrl) - 1) * 10);
     } else {
       setPageOffset(0);
     }
@@ -55,9 +61,7 @@ const Search = () => {
   useEffect(() => {
     setSparqlData("");
     if(paginationOffsetUrl && searchResults.numFound){
-      console.log("123");
       if(((paginationOffsetUrl - 1) * 10) > searchResults.numFound){
-        console.log("abc");
         setPageOffset(0);
       }
     }
