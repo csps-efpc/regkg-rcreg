@@ -38,13 +38,8 @@ const Search = () => {
   // Catch an update to searchParameterUrl
   // Set the correct states (UI view, and what is sent to API)
   useEffect(() => {
-    if(paginationOffsetUrl && searchResults.numFound){
-      if(((paginationOffsetUrl - 1) * 10) > searchResults.numFound){
-        setPageOffset(0);
-      }
-      else{
-        setPageOffset((paginationOffsetUrl - 1) * 10);
-      }
+    if(paginationOffsetUrl){
+      setPageOffset((paginationOffsetUrl - 1) * 10);
     } else {
       setPageOffset(0);
     }
@@ -59,6 +54,13 @@ const Search = () => {
   // Clear the More Info Sparql Query when the search results are updated.
   useEffect(() => {
     setSparqlData("");
+    if(paginationOffsetUrl && searchResults.numFound){
+      console.log("123");
+      if(((paginationOffsetUrl - 1) * 10) > searchResults.numFound){
+        console.log("abc");
+        setPageOffset(0);
+      }
+    }
   }, [searchResults]);
 
   const contentTranslations = {
