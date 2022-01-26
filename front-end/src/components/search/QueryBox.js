@@ -5,6 +5,7 @@ import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 import Alert from "react-bootstrap/Alert";
 import "../../style.css";
+import { useLocation, useParams, useNavigate  } from 'react-router-dom';
 
 /*
   Pages of Use: Search
@@ -43,6 +44,17 @@ const QueryBox = (props) => {
   useEffect(() => {
     setUserSearchValue("");
   }, [props.language]);
+
+  const location = useLocation();
+  const params = useParams();
+  let navigate = useNavigate();
+
+  if(params.searchQuery){
+    useEffect(() => {
+      setSearchQuery(params.searchQuery);
+      setUserSearchValue(params.searchQuery);
+    }, [])
+  }
 
   const submitQuery = async() => {
     /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
@@ -125,6 +137,14 @@ const QueryBox = (props) => {
   const processQueryForSubmit = () => {
     props.setPageOffset(0);
     setSearchQuery(userSearchValue);
+    if(params.searchQuery){
+      let newLocation = location.pathname;
+      newLocation = newLocation.replace(params.searchQuery, userSearchValue);
+      navigate(newLocation, {replace: true});
+    }
+    else {
+      navigate(location.pathname + userSearchValue, {replace: true});
+    }
     // Updateing SearchQuery will trigger useEffect(() => {submitQuery()}, [searchQuery])
   }
 
