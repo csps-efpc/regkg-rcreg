@@ -47,5 +47,10 @@
     "https://schema.org/url": "URL",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name": "Organization Name",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head": "Department Head",
-    "https://www.csps-efpc.gc.ca/ext/instrument-references": "Instrument References"
+    "https://www.csps-efpc.gc.ca/ext/instrument-references": "Instrument References",
+    "https://schema.org/legislationIdentifier" : "Legislation Identifier",
+    "https://schema.org/legislationChanges" : "Legislation Changes",
+    "https://schema.org/legislationConsolidates" : "Legislation Consolidates",
+    "https://schema.org/legislationDate" : "Legislation Date",
+    "rdf:Type" : "Type"
 }

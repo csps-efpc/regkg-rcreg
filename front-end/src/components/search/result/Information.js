@@ -42,7 +42,12 @@ const Information = (props) =>{
     "https://schema.org/url",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head",
-    "https://www.csps-efpc.gc.ca/ext/instrument-references"
+    "https://www.csps-efpc.gc.ca/ext/instrument-references",
+    "https://schema.org/legislationIdentifier",
+    "https://schema.org/legislationChanges",
+    "https://schema.org/legislationConsolidates",
+    "https://schema.org/legislationDate",
+    "rdf:Type",
   ]
 
   const [moreInfo, setMoreInfo] = useState();

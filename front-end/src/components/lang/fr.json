@@ -47,5 +47,10 @@
     "https://schema.org/url": "URL",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name": "Nom de l'organisation",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head": "Chef de département",
-    "https://www.csps-efpc.gc.ca/ext/instrument-references": "fait référence à"
+    "https://www.csps-efpc.gc.ca/ext/instrument-references": "fait référence à",
+    "https://schema.org/legislationIdentifier" : "Identifiant de la législation",
+    "https://schema.org/legislationChanges" : "Modifications législatives",
+    "https://schema.org/legislationConsolidates" : "la législation consolide",
+    "https://schema.org/legislationDate" : "Législation Date",
+    "rdf:Type" : "Type"
 }
