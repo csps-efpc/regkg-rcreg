@@ -13,8 +13,7 @@ import Theme from "../components/Theme";
 import QueryBox from "../components/search/QueryBox";
 import SingleResult from "../components/search/result/SingleResult";
 import PaginationQuery from "../components/search/PaginationQuery";
-
-
+import { useParams  } from 'react-router-dom';
 import {Context} from "../components/lang/LanguageWrapper";
 
 
@@ -30,14 +29,31 @@ const Search = () => {
   // had the Related Regulations button clicked
   const [sparqlData, setSparqlData] = useState("");
 
+  // Get pagination offset from the URL
+  const { paginationOffsetUrl } = useParams();
+
   // Numeric value repsresenting offset for pagination
-  const [pageOffset, setPageOffset] = useState(0);
+  const [pageOffset, setPageOffset] = useState((paginationOffsetUrl ? ((paginationOffsetUrl - 1) * 10) : 0));
+
+  // Catch an update to searchParameterUrl
+  // Set the correct states (UI view, and what is sent to API)
+  useEffect(() => {
+    if(paginationOffsetUrl && searchResults.numFound){
+      if(((paginationOffsetUrl - 1) * 10) > searchResults.numFound){
+        setPageOffset(0);
+      }
+      else{
+        setPageOffset((paginationOffsetUrl - 1) * 10);
+      }
+    } else {
+      setPageOffset(0);
+    }
+  }, [paginationOffsetUrl])
 
   // Clear the Search Query and Search Results when the language context is updated.
   useEffect(() => {
     setsearchResults("");
     setSparqlData("");
-    setPageOffset(0);
   }, [currentLang]);
 
   // Clear the More Info Sparql Query when the search results are updated.
