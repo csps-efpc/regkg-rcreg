@@ -77,7 +77,11 @@ const Information = (props) =>{
     .then((data) => {
       const dataInCurrentLang = [];
       for(const object of data){
-        if(object.o["xml:lang"] == props.language){
+        if(object.o["xml:lang"]){
+          if(object.o["xml:lang"] == props.language){
+            dataInCurrentLang.push(object);
+          }
+        } else {
           dataInCurrentLang.push(object);
         }
       }
