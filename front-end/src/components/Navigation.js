@@ -93,7 +93,7 @@ const Navigation = () => {
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
             <Nav.Link as={Link} aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.home}</Nav.Link>
-            <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/search"}>{navbarTranslations.search}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/search/"}>{navbarTranslations.search}</Nav.Link>
             <Nav.Link as={Link} aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.about}</Nav.Link>
             <Nav.Link as={Link} aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.contact}</Nav.Link>
           </Nav>
