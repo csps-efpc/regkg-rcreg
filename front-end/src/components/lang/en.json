@@ -28,6 +28,9 @@
     "app.result.related": "Related Regulations",
     "app.result.link": "Open in new tab",
     "app.result.information": "More Information",
+    "app.result.information.type" : "Type",
+    "app.result.information.regulation" : "Regulation",
+    "app.result.information.other" : "Other",
     "app.query.errorHeader" : "Query Error",
     "app.query.errorGeneric" : "A problem arose when fetching search results. Please check your query and try again.",
     "app.query.errorNoResults" : "Your search returned no results.  Please check your query and try again.",
@@ -47,5 +50,10 @@
     "https://schema.org/url": "URL",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name": "Organization Name",
     "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head": "Department Head",
-    "https://www.csps-efpc.gc.ca/ext/instrument-references": "Instrument References"
+    "https://www.csps-efpc.gc.ca/ext/instrument-references": "Instrument References",
+    "https://schema.org/legislationIdentifier" : "Legislation Identifier",
+    "https://schema.org/legislationChanges" : "Legislation Changes",
+    "https://schema.org/legislationConsolidates" : "Legislation Consolidates",
+    "https://schema.org/legislationDate" : "Legislation Date",
+    "rdf:Type" : "Type"
 }
