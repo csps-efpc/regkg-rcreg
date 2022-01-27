@@ -32,6 +32,7 @@
     "app.result.information.score" : "Result Score",
     "app.result.information.regulation" : "Regulation",
     "app.result.information.other" : "Other",
+    "app.result.information.law" : "Law",
     "app.query.errorHeader" : "Query Error",
     "app.query.errorGeneric" : "A problem arose when fetching search results. Please check your query and try again.",
     "app.query.errorNoResults" : "Your search returned no results.  Please check your query and try again.",

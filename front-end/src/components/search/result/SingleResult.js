@@ -19,6 +19,7 @@ const SingleResult = (props) =>{
   const informationTranslations = {
     regulation : useIntl().formatMessage({id: "app.result.information.regulation"}),
     other : useIntl().formatMessage({id: "app.result.information.other"}),
+    law : useIntl().formatMessage({id: "app.result.information.law"}),
   }
 
   // if the type is known, set typeValue to it, otherwise set it to Other
