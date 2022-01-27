@@ -2,6 +2,7 @@ import React, { useEffect, useContext } from "react";
 import { Route, Routes, BrowserRouter, Navigate } from 'react-router-dom';
 import Home from "./pages/Home"
 import Search from "./pages/Search"
+import Instrument from "./pages/Instrument"
 import {Context} from "./components/lang/LanguageWrapper";
 
 const App = () => {  
@@ -23,6 +24,7 @@ const App = () => {
       <Routes>
         <Route path="" element={<Home />}></Route>
         <Route path="search/*" element={<SearchRoute />}></Route>
+        <Route path="instrument/:instrumentId" element={<Instrument />}></Route>
       </Routes>
     )
   }
@@ -34,6 +36,7 @@ const App = () => {
       <Routes>
         <Route path="" element={<Home />}></Route>
         <Route path="search/*" element={<SearchRoute />}></Route>
+        <Route path="instrument/:instrumentId" element={<Instrument />}></Route>
       </Routes>
     )
   }
