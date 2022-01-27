@@ -57,6 +57,7 @@ const QueryBox = (props) => {
     fetch(requestURL + new URLSearchParams({
         q:searchQuery,
         df:`text_${props.language}_txt`,
+        fl:"*,score",
         start:props.pageOffset,
         'q.op': "AND"
     }), {
