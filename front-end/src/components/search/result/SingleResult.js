@@ -34,7 +34,7 @@ const SingleResult = (props) =>{
       <Row>
         <p tabIndex="0">{(props.doc[`text_${props.language}_txt`])}</p>
       </Row>
-      <Row><span tabIndex="0"><FormattedMessage id="app.result.information.type" />: {typeValue}</span></Row>
+      <Row><span tabIndex="0"><FormattedMessage id="app.result.information.type" />: {typeValue}. <FormattedMessage id="app.result.information.score" />: {props.score}.</span></Row>
       <Row>
         <View id={props.doc.id} language={props.language} linktarget={props.doc[`url_${props.language}_s`]}/>
       </Row>
