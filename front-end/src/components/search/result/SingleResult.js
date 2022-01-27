@@ -1,5 +1,5 @@
 import React from "react";
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage, useIntl} from 'react-intl';
 import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import View from "./View";
@@ -13,6 +13,17 @@ import Information from "./Information";
 */
 
 const SingleResult = (props) =>{
+  // Array of translations for the "Type: {TEXT_HERE}" <span>
+  // Each key is meant to match the type_s returned from the /search/ API
+  // so that type_s can be used to search this array. Other is a fallback. 
+  const informationTranslations = {
+    regulation : useIntl().formatMessage({id: "app.result.information.regulation"}),
+    other : useIntl().formatMessage({id: "app.result.information.other"}),
+    law : useIntl().formatMessage({id: "app.result.information.law"}),
+  }
+
+  // if the type is known, set typeValue to it, otherwise set it to Other
+  const typeValue = (informationTranslations[props.doc[`type_s`]] ? informationTranslations[props.doc[`type_s`]] : informationTranslations["other"])
 
   return(
     <Container className="slight-border px-5 py-3 mb-2 rounded-3" key={props.doc.id} >
@@ -24,6 +35,7 @@ const SingleResult = (props) =>{
       <Row>
         <p tabIndex="0">{(props.doc[`text_${props.language}_txt`])}</p>
       </Row>
+      <Row><span tabIndex="0"><FormattedMessage id="app.result.information.type" />: {typeValue}. <FormattedMessage id="app.result.information.score" />: {props.score}.</span></Row>
       <Row>
         <View id={props.doc.id} language={props.language} linktarget={props.doc[`url_${props.language}_s`]}/>
       </Row>

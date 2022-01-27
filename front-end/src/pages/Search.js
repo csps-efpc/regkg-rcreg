@@ -16,6 +16,16 @@ import PaginationQuery from "../components/search/PaginationQuery";
 import { useParams  } from 'react-router-dom';
 import {Context} from "../components/lang/LanguageWrapper";
 
+const scoresToPercentString = (singleScore, maxScore, decimalCount) => {
+  // Given two numbers - a score for one result and a max score for the entire search
+  // calculate the percentage of the singleScore out of the max score
+  // convert to a string, return the results
+  // For more information on how SOLR score results:
+  // https://cwiki.apache.org/confluence/display/solr/SolrRelevancyFAQ#SolrRelevancyFAQ-Howaredocumentsscored
+  const result = parseFloat(singleScore); //convert from strings
+  const max = parseFloat(maxScore);
+  return ((result / max) * 100).toFixed(decimalCount) + "%"
+}
 
 const Search = () => {
 
@@ -84,8 +94,9 @@ const Search = () => {
   if (searchResults.docs){
     for (let doc of Object.entries(searchResults.docs)) {
       if(doc[1][`text_${currentLang}_txt`]){
+        const score = scoresToPercentString(doc[1].score, searchResults.maxScore, 2);
         searchResultItems.push(
-          <SingleResult doc={doc[1]} sparqlData={sparqlData} setSparqlData={setSparqlData} language={currentLang} key={doc[1].id}/>
+          <SingleResult doc={doc[1]} sparqlData={sparqlData} setSparqlData={setSparqlData} language={currentLang} key={doc[1].id} score={score}/>
         );
       }
     };
