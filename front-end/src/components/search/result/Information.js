@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from 'react-intl';
 import Button from "react-bootstrap/Button";
+import { Link } from 'react-router-dom';
+import { WalkTheGraphInstruments } from "../../WalkTheGraphInstruments"
 /*
   Pages of Use: Search
   Description: View of the reg info and related regs.
@@ -141,6 +143,8 @@ const Information = (props) =>{
       */}
 
       {Object.keys(props.sparqlData[props.id]).map((o, i) => {
+        if(WalkTheGraphInstruments.includes(o))
+          return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${props.language}/instrument/${encodeURIComponent(props.sparqlData[props.id][o])}`}>{props.sparqlData[props.id][o]}</Link></p>
         return <p key={o}><FormattedMessage id={o}/>: {props.sparqlData[props.id][o]}</p>
       })}
     </span>
