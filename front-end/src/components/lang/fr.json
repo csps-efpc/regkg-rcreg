@@ -29,6 +29,7 @@
     "app.result.link": "Ouvrir dans un nouvel onglet",
     "app.result.information": "Plus d'informations",
     "app.result.information.type" : "Type",
+    "app.result.information.score" : "Pointage du résultat",
     "app.result.information.regulation" : "Règlement",
     "app.result.information.other" : "Autre",
     "app.result.information.law" : "Loi",

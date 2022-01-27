@@ -29,6 +29,7 @@
     "app.result.link": "Open in new tab",
     "app.result.information": "More Information",
     "app.result.information.type" : "Type",
+    "app.result.information.score" : "Result Score",
     "app.result.information.regulation" : "Regulation",
     "app.result.information.other" : "Other",
     "app.result.information.law" : "Law",
