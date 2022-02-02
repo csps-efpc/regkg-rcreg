@@ -50,7 +50,7 @@ const Instrument = () => {
   const submitSparqlRelated = async(id) => {
     /* Single search term: https://example.com/sparql?query=SELECT%20*%20{%3Chttps://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6%3E%20%3Chttps://schema.org/url%3E%20?o}%20LIMIT%208&Accept=application/sparql-results%2Bjson */
     const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");; // If prefix is set in environment variables, append to the request, otherwise use relative path
-    const spaqrlPath = "/sparql?"
+    const spaqrlPath = "/sparql?";
     const queryTerms = queryStringGenerator(id);
     const acceptTerms = "&Accept=application/sparql-results%2Bjson";
     const requestURL = API_PREFIX + spaqrlPath +  queryTerms + "&Accept=application/sparql-results%2Bjson";
@@ -80,8 +80,12 @@ const Instrument = () => {
       let convertedObject = {}
       for(const object of data){
         for(const p of predicates){
-          if(object.p.value == p)
-            convertedObject[p] = object.o.value;
+          if(object.p.value == p) {
+              if(!convertedObject.hasOwnProperty(p)) {
+                  convertedObject[p] = [];
+              }
+              convertedObject[p].push(object.o.value);
+          }
         }
       }
       return convertedObject;
@@ -106,7 +110,7 @@ const Instrument = () => {
     const linkArray = [
       "https://laws-lois.justice.gc.ca/ext/enabling-act",
       "https://laws-lois.justice.gc.ca/ext/enables-regulation",
-      "https://laws-lois.justice.gc.ca/ext/consolidates",
+      "https://schema.org/legislationConsolidates",
       "https://laws-lois.justice.gc.ca/ext/amends-instrument",
     ]
     moreInformationPanel = 
@@ -116,14 +120,30 @@ const Instrument = () => {
           For each predicate return a new <p> tag
           Example <p>Word Count: 32642</p>
       */}
-
       {Object.keys(moreInfo).map((o, i) => {
-        if(WalkTheGraphInstruments.includes(o))// Check if o is in the special link array from above
-          return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
-        if(o == "https://schema.org/url") // special case, if o is a URL to the full text
-          return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o]}>{moreInfo[o]}</a></p>
-        return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o]}</p>
-      })}
+        if(moreInfo[o].length == 1) {  
+          if(WalkTheGraphInstruments.includes(o)) {// Check if o is in the special link array from above
+            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
+          }
+          if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
+            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o]}>{moreInfo[o]}</a></p>
+          }
+          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o]}</p>
+          } else {
+              var rows = [];
+              for(var i = 0; i < moreInfo[o].length; i++) {
+                var oo = moreInfo[o][i];
+                if(WalkTheGraphInstruments.includes(o)) {
+                    rows.push( <li key={oo + "-" + o}><Link to={`/${currentLang}/instrument/${encodeURIComponent(oo)}`}>{oo}</Link></li> )
+                } else if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
+                    rows.push( <li key={oo + "-" + o}><a target="_blank" href={oo}>{oo}</a></li> )
+                } else {
+                    rows.push (<li key={oo + "-" + o}> {oo} </li>)
+                }
+              }
+              return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o}>{rows}</ul></>
+          }
+    })}
     </span>
   }
 
