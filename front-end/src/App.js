@@ -1,5 +1,5 @@
 import React, { useEffect, useContext } from "react";
-import { Route, Routes, BrowserRouter, Navigate } from 'react-router-dom';
+import { Route, Routes, HashRouter, Navigate } from 'react-router-dom';
 import Home from "./pages/Home"
 import Search from "./pages/Search"
 import Instrument from "./pages/Instrument"
@@ -41,13 +41,13 @@ const App = () => {
     )
   }
   return(
-    <BrowserRouter>
+    <HashRouter>
       <Routes >
         <Route path="/" element={<Navigate to="/en/" replace />}></Route>
         <Route path="/en/*" element={<EnglishRoute />}></Route>
         <Route path="/fr/*" element={<FrenchRoute />}></Route>
       </Routes >
-    </BrowserRouter>
+    </HashRouter>
   );
 }
 
