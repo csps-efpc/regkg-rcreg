@@ -5,6 +5,7 @@ import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 import Alert from "react-bootstrap/Alert";
 import "../../style.css";
+import { useLocation, useParams, useNavigate  } from 'react-router-dom';
 
 /*
   Pages of Use: Search
@@ -38,11 +39,45 @@ const QueryBox = (props) => {
   // String containing what to send to the API (updated on key or button press)
   const [searchQuery, setSearchQuery] = useState("");
 
+  const location = useLocation();
+  const { searchParameterUrl } = useParams();
+  let navigate = useNavigate();
 
-  // Clear the Search Query and Search Results when the language context is updated.
+  // Reset states before navigation to opposite language search path
   useEffect(() => {
+    props.setPageOffset(0);    
+    props.setsearchResults("");
+    setSearchQuery("");
     setUserSearchValue("");
   }, [props.language]);
+
+  // This is called when the search button is pressed.
+  // Therefore, reset results and pagination, then navigate to the new search query
+  // Since there is a searchParameterUrl within the route "/search/:searchParameterUrl" this will get caught and set the searchQuery state.
+  const processQueryForSubmit = () => {
+    props.setPageOffset(0);
+    if(userSearchValue)
+      navigate("../../../" + props.language + "/search/" + userSearchValue + "/" + ((props.pageOffset / 10) + 1));
+  }
+
+  //When the search query is updated, if it is not null, submit it to API
+  useEffect(() => {if(searchQuery) {submitQuery()}}, [searchQuery])
+
+  // Catch an update to searchParameterUrl
+  // Set the correct states (UI view, and what is sent to API)
+  useEffect(() => {
+    if(searchParameterUrl){
+      // Updating SearchQuery will trigger useEffect(() => {submitQuery()}, [searchQuery])
+      setSearchQuery(searchParameterUrl);
+      setUserSearchValue(searchParameterUrl);
+    } else {
+      // Setting searchQuery to nothing, make sure to check it is set before calling API
+      setSearchQuery("");
+      setUserSearchValue("");
+      // Clear the search results since we are at an empty state
+      props.setsearchResults("");
+    }
+  }, [searchParameterUrl])
 
   const submitQuery = async() => {
     /* Single search term: https://example.com/search?df=text_en_txt&q=fish */
@@ -111,6 +146,7 @@ const QueryBox = (props) => {
     if (skipOffsetQuery.current) {
        skipOffsetQuery.current = false;
     } else {
+        navigate("../../../" + props.language + "/search/" + userSearchValue + "/" + ((props.pageOffset / 10) + 1));
         submitQuery();
     }
   }, [props.pageOffset]);
@@ -121,17 +157,6 @@ const QueryBox = (props) => {
       processQueryForSubmit();
     }
   }
-
-  //
-  const processQueryForSubmit = () => {
-    props.setPageOffset(0);
-    setSearchQuery(userSearchValue);
-    // Updateing SearchQuery will trigger useEffect(() => {submitQuery()}, [searchQuery])
-  }
-
-  // Used to skip the first render
-  const isInitialMountQuery = useRef(true);
-  useEffect(() => {isInitialMountQuery.current ? isInitialMountQuery.current = false : submitQuery()}, [searchQuery])
 
   return(
     <>

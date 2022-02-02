@@ -10,6 +10,7 @@ import {FormattedMessage, useIntl } from 'react-intl';
 import {Context} from "../components/lang/LanguageWrapper";
 import "../style.css";
 import logo from "../img/logo.svg";
+import { useLocation, useParams, useNavigate  } from 'react-router-dom';
 
 /*
   Pages of Use: All
@@ -30,6 +31,10 @@ const Navigation = () => {
   // Set it based on the i18n wrapper language, which currently pulls from the browser
   const [navbarLang, setNavbarLang] = useState(context.locale); 
 
+  const location = useLocation();
+  const params = useParams();
+  let navigate = useNavigate();
+
   /*
     Function: toggleLanguage
     Purpose: Toggle the navBar language between two values
@@ -41,10 +46,12 @@ const Navigation = () => {
     if(navbarLang == "en"){
       setNavbarLang("fr");
       context.selectLanguage("fr");
+      navigate(location.pathname.replace("/en/", "/fr/"));
     }
     else{
       setNavbarLang("en");
       context.selectLanguage("en");
+      navigate(location.pathname.replace("/fr/", "/en/"));
     }
   }
 
@@ -85,10 +92,10 @@ const Navigation = () => {
         <Navbar.Toggle aria-controls="basic-navbar-nav" />
         <Navbar.Collapse id="basic-navbar-nav">
           <Nav className="me-auto">
-            <Nav.Link as={Link} aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.home}</Nav.Link>
-            <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to="/search">{navbarTranslations.search}</Nav.Link>
-            <Nav.Link as={Link} aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.about}</Nav.Link>
-            <Nav.Link as={Link} aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} to="/">{navbarTranslations.contact}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.home}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/search/"}>{navbarTranslations.search}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.about}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.contact}</Nav.Link>
           </Nav>
         </Navbar.Collapse>
         <Navbar.Collapse className="justify-content-end">

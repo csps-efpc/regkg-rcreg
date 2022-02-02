@@ -1,32 +1,22 @@
-import React, { useEffect, useState } from "react";
-import { FormattedMessage, useIntl } from 'react-intl';
-import Button from "react-bootstrap/Button";
-import { Link } from 'react-router-dom';
-import { WalkTheGraphInstruments } from "../../WalkTheGraphInstruments"
-/*
-  Pages of Use: Search
-  Description: View of the reg info and related regs.
-  By default it is a button on its own
-  When clicked it sends a query to the search API
-  This updates the RegInfo state
-  New UI elements to show this info pop up
+import React, { useState, useContext, useEffect } from "react";
+import Container from "react-bootstrap/Container";
+import Col from "react-bootstrap/Col";
+import Row from "react-bootstrap/Row";
+import {FormattedMessage} from 'react-intl';
+import "../style.css";
+import logo from "../img/logo.svg";
+import Theme from "../components/Theme"
+import { WalkTheGraphInstruments } from "../components/WalkTheGraphInstruments"
+import { useParams, Link } from 'react-router-dom';
+import { Context } from "../components/lang/LanguageWrapper";
 
-  props:
-    id: a string identifying the exact regulatory instrument
-      example: https://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6
-      example 2: https://www.canada.ca/en/privy-council/ext/statutory-instrument/P-15.6#1423 where the #1423 is the id for the block within the regulation
 
-      if there is a # symbol, be aware to split the string at it and take the text before the hash
-      if there is not, do not split
-
-*/
-
-const Information = (props) =>{
-
-  const ariaTranslations = {
-    information : useIntl().formatMessage({id: "app.result.information"}),
-  }
-
+const Instrument = () => {
+  const { instrumentId } = useParams();
+  const decodedId = decodeURIComponent(instrumentId);
+  const langContext = useContext(Context);
+  const currentLang = langContext.locale;
+  const [moreInfo, setMoreInfo] = useState();
   const predicates = [ // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
     //Regex for find: final PropertyImpl .* = new PropertyImpl\(
     "https://laws-lois.justice.gc.ca/ext/instrument-id",
@@ -51,13 +41,9 @@ const Information = (props) =>{
     "https://schema.org/legislationDate",
     "rdf:Type",
   ]
-
-  const [moreInfo, setMoreInfo] = useState();
-  const [showInfo, setShowInfo] = useState(false);
-
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id.split("#")[0] + encodeURIComponent("> ?p ?o}")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o}")
     return querySign + selectTerms;
   }
 
@@ -74,13 +60,14 @@ const Information = (props) =>{
       return resp.json();
     }) 
     .then((data) => {
+      console.log(data);
       return data.results.bindings;
     })
     .then((data) => {
       const dataInCurrentLang = [];
       for(const object of data){
         if(object.o["xml:lang"]){
-          if(object.o["xml:lang"] == props.language){
+          if(object.o["xml:lang"] == currentLang){
             dataInCurrentLang.push(object);
           }
         } else {
@@ -100,7 +87,7 @@ const Information = (props) =>{
       return convertedObject;
     })
     .then((data) => {
-      props.setSparqlData((prevState) => ({...prevState, [id]: data}));
+      setMoreInfo(data);
     })
     .catch((error) => {
       console.log(error)
@@ -108,32 +95,20 @@ const Information = (props) =>{
 
   }
 
-  const toggleInformationPanel = () => {
-    /*
-      This function will be used to switch between three states that the
-      component can be in.
-      1) sparqlData is undefined (first show)
-          -> fetch from sparql
-          -> show panel after return
-      2) sparqlData filled, showInfo true (closing panel)
-          -> close panel, make showInfo false
-      3) sparqlData filled, showInfo false (opening panel 2nd time)
-          -> open panel, make showInfo true
-    */
-    if(!props.sparqlData[props.id]){
-      submitSparqlRelated(props.id)
-      .then(() => {
-        setShowInfo(true);
-      })
-    }
-    else if (props.sparqlData[props.id]){
-      setShowInfo(prevShowInfo => !prevShowInfo);
-    }
-  }
+  useEffect(() => {
+    submitSparqlRelated(decodedId);
+  }, [instrumentId]);
 
   let moreInformationPanel = "";
 
-  if(props.sparqlData[props.id]){
+  if(moreInfo){
+    // Link Array is a list of values that can be used to 'walk the graph'
+    const linkArray = [
+      "https://laws-lois.justice.gc.ca/ext/enabling-act",
+      "https://laws-lois.justice.gc.ca/ext/enables-regulation",
+      "https://laws-lois.justice.gc.ca/ext/consolidates",
+      "https://laws-lois.justice.gc.ca/ext/amends-instrument",
+    ]
     moreInformationPanel = 
     <span tabIndex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
       {/*
@@ -142,28 +117,35 @@ const Information = (props) =>{
           Example <p>Word Count: 32642</p>
       */}
 
-      {Object.keys(props.sparqlData[props.id]).map((o, i) => {
-        if(WalkTheGraphInstruments.includes(o))
-          return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${props.language}/instrument/${encodeURIComponent(props.sparqlData[props.id][o])}`}>{props.sparqlData[props.id][o]}</Link></p>
-        return <p key={o}><FormattedMessage id={o}/>: {props.sparqlData[props.id][o]}</p>
+      {Object.keys(moreInfo).map((o, i) => {
+        if(WalkTheGraphInstruments.includes(o))// Check if o is in the special link array from above
+          return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
+        if(o == "https://schema.org/url") // special case, if o is a URL to the full text
+          return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o]}>{moreInfo[o]}</a></p>
+        return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o]}</p>
       })}
     </span>
   }
 
   return(
-    <>
-      <Button aria-label={ariaTranslations.information} variant="light" className="left-button" size="lg" onClick={() => toggleInformationPanel()}>
-        {showInfo ? 
-          <><span className="material-icons inline-icon-large">expand_less</span><FormattedMessage id = "app.result.information" /></> :
-          <><span className="material-icons inline-icon-large">expand_more</span><FormattedMessage id = "app.result.information" /></>
-        }
-      </Button>
-      {showInfo ? 
-        moreInformationPanel:
-        ""
-      }
-    </>
+    <Theme>
+      {/*Content*/}
+      <Container className="p-5 mb-4 bg-light rounded-3">
+
+        {/*Header*/}
+        <Row className="">
+          <Col>
+            <h1 className="header">{moreInfo ? moreInfo["https://schema.org/name"] : ""}</h1>
+          </Col>
+        </Row>
+
+        {/*Introduction*/}
+        <Row>
+          {moreInformationPanel ? moreInformationPanel : ""}
+        </Row>
+      </Container>
+    </Theme>
   );
 }
 
-export default Information;
+export default Instrument;

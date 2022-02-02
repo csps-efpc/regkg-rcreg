@@ -4,6 +4,7 @@ import Container from "react-bootstrap/Container";
 import Row from "react-bootstrap/Row";
 import View from "./View";
 import Information from "./Information";
+import { Link } from 'react-router-dom';
 
 /*
   Pages of Use: Search
@@ -24,10 +25,12 @@ const SingleResult = (props) =>{
 
   // if the type is known, set typeValue to it, otherwise set it to Other
   const typeValue = (informationTranslations[props.doc[`type_s`]] ? informationTranslations[props.doc[`type_s`]] : informationTranslations["other"])
-
+  let docId = props.doc.id;
+  if(docId.includes("#"))
+    docId = docId.split("#")[0]
   return(
     <Container className="slight-border px-5 py-3 mb-2 rounded-3" key={props.doc.id} >
-      <Row><h2 tabIndex="0">{props.doc[`title_${props.language}_txt`]}</h2></Row>
+      <Row><h2 tabIndex="0"><Link to={`/${props.language}/instrument/${encodeURIComponent(docId)}`}>{props.doc[`title_${props.language}_txt`]}</Link></h2></Row>
       <Row>
         <Information id={props.doc.id} language={props.language} setSparqlData={props.setSparqlData} sparqlData={props.sparqlData} />
       </Row>
