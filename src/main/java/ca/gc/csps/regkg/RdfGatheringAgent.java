@@ -57,6 +57,7 @@ import org.jdom2.JDOMException;
 import org.jdom2.Namespace;
 import org.jdom2.input.SAXBuilder;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -847,10 +848,12 @@ public class RdfGatheringAgent {
             for (org.jsoup.nodes.Element table : tables) {
                 String id = table.selectFirst("tr > td:eq(1)").text();
                 String date = table.selectFirst("tr > td:eq(2)").text();
-                String act = null;
+                List<String> acts = new ArrayList<>();
                 org.jsoup.nodes.Element actElement = table.selectFirst("tr > td:containsOwn(act) + td");
                 if (actElement != null) {
-                    act = actElement.text();
+                    for (TextNode node : actElement.textNodes()) {
+                        acts.add(node.text().trim());
+                    }
                 }
                 String precis = table.selectFirst("tr > td:containsOwn(precis) + td").text();
                 String url = null;
@@ -869,13 +872,15 @@ public class RdfGatheringAgent {
                     name = id + " - " + subjectElement.text();
                 }
                 final Resource subject = ResourceFactory.createResource(instrumentURI);
-                if (act != null) {
-                    Resource enablingSubject = actNames.get(act);
-                    if (enablingSubject != null) {
-                        model.add(subject, enablingActProperty, enablingSubject);
-                    } else {
-                        if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
-                            Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
+                for (String act : acts) {
+                    if (!act.isBlank()) {
+                        Resource enablingSubject = actNames.get(act);
+                        if (enablingSubject != null) {
+                            model.add(subject, enablingActProperty, enablingSubject);
+                        } else {
+                            if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
+                                Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
+                            }
                         }
                     }
                 }
