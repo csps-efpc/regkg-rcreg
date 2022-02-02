@@ -124,26 +124,34 @@ public class RdfGatheringAgent {
     final PropertyImpl rdfTypeProperty = new PropertyImpl("rdf:Type");
 
     /**
-     * Recursively read turtle files into the given model.
+     * Recursively read local files into the given model.
      *
-     * @param root the file path from which to start searching for .ttl and .nt
-     * files
+     * @param root the file path from which to start searching for .csv, .ttl
+     * and .nt files
      * @param model the RDF model into which triples and namespaces should be
      * inserted
      * @throws IOException if an error occurs while recursing and reading.
      * @return true if all files were successfully parsed and no unknown files
      * were discovered.
      */
-    public boolean fetchAndParseLocalTurtle(File root, Model model) throws IOException {
+    public boolean fetchAndParseLocalTriples(File root, Model model) throws IOException {
         MutableBoolean pass = new MutableBoolean(true);
         // Iterate through the "rdf" directory for turtle files.
         // Manually-coded facts and shorthand prefixes can be declared in the turtle.
-
+        CsvToRdfParser csvParser = new CsvToRdfParser();
         Files.walk(root.toPath()).filter(path -> Files.exists(path, LinkOption.NOFOLLOW_LINKS)).filter(path -> path.toFile().isFile()).forEach(path -> {
             ErrorHandler handler = new RdfParsingErrorHandler(pass, path);
             switch (FilenameUtils.getExtension(path.toString())) {
                 case "ttl", "nt" ->
                     RDFParser.source(path).checking(true).errorHandler(handler).build().parse(model);
+                case "csv" -> {
+                    try {
+                        csvParser.parse(path.toFile(), model);
+                    } catch (IOException ex) {
+                        Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.SEVERE, null, ex);
+                        pass.setFalse();
+                    }
+                }
                 default -> {
                     System.err.println("ERROR: Unexpected file extension at " + path);
                     pass.setFalse();
