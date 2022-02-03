@@ -13,7 +13,7 @@
     "app.home.callToAction": "Try it now!",
     "app.home.paraOne": "The regulatory knowledge graph is a way to search and connect the regulatory information in Canada.",
     "app.home.paraTwo": "It's an open-source demonstration project, created to prove that the technology is suitable to the task. The information displayed in the application makes no representations about being complete, or up to date.",
-    "app.home.paraThree": "It was produced by the Public Sector Experimentation (PSX) team at the Canada School of the Public Service.",
+    "app.home.paraThree": "It was produced by the Public Sector Experimentation (PSX) team at the Canada School of Public Service.",
     "app.home.paraFour": "If you have questions about the graph, want to contribute to it's improvement or deploy it yourself, please reach out to incubate.incuber@csps-efpc.gc.ca !",
     "app.search.title": "Search The Regulatory Knowledge Graph",
     "app.search.mainButton": "Search",
