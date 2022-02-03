@@ -169,5 +169,11 @@
             <artifactId>htmlunit-driver</artifactId>
             <version>3.57.0</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.spotbugs</groupId>
+            <artifactId>spotbugs-annotations</artifactId>
+            <version>4.5.3</version>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 </project>

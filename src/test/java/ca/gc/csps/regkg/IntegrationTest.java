@@ -88,7 +88,7 @@ public class IntegrationTest {
         // Write the model out as the WASM-SQLite DB
         agent.writeModelToSqlite(model, SQLITE_BUILD_PATH);
         // Write the index out as SOLR-formatted JSON
-        agent.writeIndexToJson(searchIndex, INDEX_BUILD_PATH);
+        agent.writeIndexToJson(searchIndex, new File(INDEX_BUILD_PATH));
     }
 
 }
