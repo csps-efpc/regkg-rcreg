@@ -2,6 +2,7 @@ import React, { useState, useContext } from "react";
 import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
+import {Link} from 'react-router-dom'
 import {FormattedMessage} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
@@ -40,11 +41,11 @@ const Home = () => {
           <p>{contentTranslations.paragraph[1]}</p>
         </Row>
 
-        {/*Sub Header*/}
+        {/*Sub Header
         <Row className="justify-content-md-center">
           <Col md="auto"><h2 className="display-6 bg-primary rounded-3 p-2">{contentTranslations.subtitle}</h2></Col>
         </Row>
-
+        */}
         {/*Further Information*/}
         <Row>
           <p>{contentTranslations.paragraph[2]}</p>
@@ -53,7 +54,7 @@ const Home = () => {
 
         {/*Call To User Action*/}
         <Row className="justify-content-md-center">
-          <Col md="auto"><h2 className="display-4 bg-light border border-primary rounded-3 p-3"><a href="#call_to_action" className="no-underline">{contentTranslations.callToAction}</a></h2></Col>
+          <Col md="auto"><h2 className="display-4 bg-light border border-primary rounded-3 p-3"><Link to="search/" className="no-underline">{contentTranslations.callToAction}</Link></h2></Col>
         </Row>
       </Container>
     </Theme>
