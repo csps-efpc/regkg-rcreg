@@ -2,6 +2,7 @@ package ca.gc.csps.regkg;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -166,22 +167,21 @@ public class RdfGatheringAgent {
      * is found, it is deleted.
      *
      * @param index the index to write
-     * @param path the file path to which the JSON should be written
+     * @param targetFile the file path to which the JSON should be written
      * @throws IOException if any part of the write operation fails.
      */
-    public void writeIndexToJson(Map<String, Map<String, String>> index, String path) throws IOException {
-        File targetFile = new File(path);
+    public void writeIndexToJson(Map<String, Map<String, String>> index, File targetFile) throws IOException {
         if (targetFile.exists()) {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try ( FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
-            Iterator<String> it = index.keySet().iterator();
+            Iterator<Map.Entry<String, Map<String, String>>> it = index.entrySet().iterator();
             while (it.hasNext()) {
-                String key = it.next();
-                TreeMap<String, String> value = new TreeMap(index.get(key));
-                value.put("id", key);
+                Map.Entry<String, Map<String, String>> entry = it.next();
+                TreeMap<String, String> value = new TreeMap(entry.getValue());
+                value.put("id", entry.getKey());
                 fos.write(gson.toJson(value).getBytes(UTF8));
                 if (it.hasNext()) {
                     fos.write(",".getBytes(UTF8));
@@ -202,13 +202,14 @@ public class RdfGatheringAgent {
      * @param path the file path to which the model should be written.
      * @throws IOException if the writing of the model to disk fails.
      */
+    @SuppressFBWarnings(value = "SQL_INJECTION_JDBC", justification = "The strings in question are loaded from files in the app resources.")
     public void writeModelToSqlite(Model model, String path) throws IOException {
         // Write the given model out to a nicely-packed SQLite db.
         // Setup DDL/SQL is pulled from a resource called "/ddl.sql"
         // Optimization is pulled from a resource called "finalize.sql"
         try {
             Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path);
-            try ( Statement stmt = conn.createStatement()) {
+            try (Statement stmt = conn.createStatement()) {
                 String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
                 String lines[] = ddlFile.split("\\r?\\n");
                 for (String line : lines) {
@@ -216,7 +217,7 @@ public class RdfGatheringAgent {
                 }
             }
             conn.setAutoCommit(false);
-            try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
+            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
                 StmtIterator stmts = model.listStatements();
                 while (stmts.hasNext()) {
                     //Namespace conflict for JDBC Statements and Jena Statements!
@@ -248,7 +249,7 @@ public class RdfGatheringAgent {
                 stmt.execute();
             }
             for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
-                try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
+                try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
                     stmt.setString(1, entry.getKey());
                     stmt.setString(2, entry.getValue());
                     System.out.println(entry.getKey() + " -> " + entry.getValue());
@@ -257,7 +258,7 @@ public class RdfGatheringAgent {
             }
             conn.commit();
             conn.setAutoCommit(true);
-            try ( Statement stmt = conn.createStatement()) {
+            try (Statement stmt = conn.createStatement()) {
                 String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
                 String lines[] = ddlFile.split("\\r?\\n");
                 for (String line : lines) {
@@ -279,49 +280,51 @@ public class RdfGatheringAgent {
      * @throws IOException
      */
     public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws IOException {
-        FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8);
-        Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
-        for (CSVRecord record : records) {
-            String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
-            final Resource subject = ResourceFactory.createResource(resourceURI);
-            StringBuilder textEn = new StringBuilder();
-            StringBuilder textFr = new StringBuilder();
-            Map<String, String> index = searchIndex.getOrDefault(resourceURI, new HashMap<String, String>());
-            if (record.get("ORGNAME_EN") != null && !record.get("ORGNAME_EN").trim().isEmpty()) {
-                model.add(subject, orgnameProperty, record.get("ORGNAME_EN"));
-                textEn.append(record.get("ORGNAME_EN"));
-                textEn.append(" ");
-            }
-            if (record.get("ORGNAME_FR") != null && !record.get("ORGNAME_FR").trim().isEmpty()) {
-                model.add(subject, orgnameProperty, record.get("ORGNAME_FR"), "fr");
-                textFr.append(record.get("ORGNAME_FR"));
-                textFr.append(" ");
-            }
-            if (record.get("DEPT_HEAD_EN") != null && !record.get("DEPT_HEAD_EN").trim().isEmpty()) {
-                model.add(subject, departmentHeadProperty, record.get("DEPT_HEAD_EN"));
-                textEn.append(record.get("DEPT_HEAD_EN"));
-                textEn.append(" ");
-            }
+        try (FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
+            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
+            for (CSVRecord record : records) {
+                String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
+                final Resource subject = ResourceFactory.createResource(resourceURI);
+                StringBuilder textEn = new StringBuilder();
+                StringBuilder textFr = new StringBuilder();
+                Map<String, String> index = searchIndex.getOrDefault(resourceURI, new HashMap<String, String>());
+                if (record.get("ORGNAME_EN") != null && !record.get("ORGNAME_EN").trim().isEmpty()) {
+                    model.add(subject, orgnameProperty, record.get("ORGNAME_EN"));
+                    textEn.append(record.get("ORGNAME_EN"));
+                    textEn.append(" ");
+                }
+                if (record.get("ORGNAME_FR") != null && !record.get("ORGNAME_FR").trim().isEmpty()) {
+                    model.add(subject, orgnameProperty, record.get("ORGNAME_FR"), "fr");
+                    textFr.append(record.get("ORGNAME_FR"));
+                    textFr.append(" ");
+                }
+                if (record.get("DEPT_HEAD_EN") != null && !record.get("DEPT_HEAD_EN").trim().isEmpty()) {
+                    model.add(subject, departmentHeadProperty, record.get("DEPT_HEAD_EN"));
+                    textEn.append(record.get("DEPT_HEAD_EN"));
+                    textEn.append(" ");
+                }
 //            if (record.get("DEPT_HEAD_FR") != null && !record.get("DEPT_HEAD_FR").trim().isEmpty()) {
 ////                model.add(subject, departmentHeadProperty, record.get("DEPT_HEAD_FR"));
 //                textFr.append(record.get("DEPT_HEAD_FR"));
 //                textFr.append(" ");
 //            }
-            index.put(TEXT_FIELD_ENGLISH, textEn.toString().trim());
-            index.put(TEXT_FIELD_FRENCH, textFr.toString().trim());
-            searchIndex.put(resourceURI, index);
+                index.put(TEXT_FIELD_ENGLISH, textEn.toString().trim());
+                index.put(TEXT_FIELD_FRENCH, textFr.toString().trim());
+                searchIndex.put(resourceURI, index);
+            }
         }
     }
 
     public void fetchAndParseMetadata(Model model) throws IOException {
         File file = new File("metadata.csv");
         if (file.exists()) {
-            FileReader in = new FileReader(file, StandardCharsets.UTF_8);
-            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
-            for (CSVRecord record : records) {
-                final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("instrument_number")));
-                if (record.get("category_item_desc_en") != null && !record.get("category_item_desc_en").isEmpty()) {
-                    model.add(subject, metadataLabelProperty, record.get("category_item_desc_en"));
+            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
+                for (CSVRecord record : records) {
+                    final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("instrument_number")));
+                    if (record.get("category_item_desc_en") != null && !record.get("category_item_desc_en").isEmpty()) {
+                        model.add(subject, metadataLabelProperty, record.get("category_item_desc_en"));
+                    }
                 }
             }
         }
@@ -331,31 +334,33 @@ public class RdfGatheringAgent {
         // Parse the regacan set from UQAM. Need to find a long-term home for this.
         File file = new File("regcan.csv");
         if (file.exists()) {
-            FileReader in = new FileReader(file, StandardCharsets.UTF_8);
-            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
-            for (CSVRecord record : records) {
-                // The "SOR" identifiers Justice uses in their URLs are mangled, because the real strings use reserved URL characters.
-                final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("ID")));
-                knownStatutoryInstruments.add(toUrlSafeId(record.get("ID")));
-                String regText = record.get("regtext");
-                String id = record.get("ID");
-                if (regText.startsWith("Registration ")) {
-                    regText = regText.substring(13);
-                }
-                if (regText.startsWith(id)) {
-                    regText = regText.substring(id.length());
-                }
-                if (regText.contains(" P.C. ")) {
-                    int startIndex = 0;
-                    if (regText.contains("ACT") && regText.indexOf("ACT") < regText.indexOf(" P.C. ")) {
-                        startIndex = regText.indexOf("ACT") + 3;
+            try (
+                    FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
+                for (CSVRecord record : records) {
+                    // The "SOR" identifiers Justice uses in their URLs are mangled, because the real strings use reserved URL characters.
+                    final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("ID")));
+                    knownStatutoryInstruments.add(toUrlSafeId(record.get("ID")));
+                    String regText = record.get("regtext");
+                    String id = record.get("ID");
+                    if (regText.startsWith("Registration ")) {
+                        regText = regText.substring(13);
                     }
-                    model.add(subject, nameProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim());
+                    if (regText.startsWith(id)) {
+                        regText = regText.substring(id.length());
+                    }
+                    if (regText.contains(" P.C. ")) {
+                        int startIndex = 0;
+                        if (regText.contains("ACT") && regText.indexOf("ACT") < regText.indexOf(" P.C. ")) {
+                            startIndex = regText.indexOf("ACT") + 3;
+                        }
+                        model.add(subject, nameProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim());
+                    }
+                    model.add(subject, sponsorProperty, record.get("sponsor"));
+                    model.add(subject, cbaWordCountProperty, record.get("CBA.wordcount"));
+                    model.add(subject, riasWordCountProperty, record.get("rias.wordcount"));
+                    model.add(subject, consultationWordCountProperty, record.get("consultation.wordcount"));
                 }
-                model.add(subject, sponsorProperty, record.get("sponsor"));
-                model.add(subject, cbaWordCountProperty, record.get("CBA.wordcount"));
-                model.add(subject, riasWordCountProperty, record.get("rias.wordcount"));
-                model.add(subject, consultationWordCountProperty, record.get("consultation.wordcount"));
             }
         }
     }
@@ -372,6 +377,7 @@ public class RdfGatheringAgent {
      * @throws IOException if the connection to the Canada Gazette cannot be
      * established.
      */
+    @SuppressFBWarnings(value = "DCN_NULLPOINTER_EXCEPTION", justification = "This screen-scraping technique is known to be brittle.")
     public Set<String> fetchAndParseStatutoryInstruments(Model model) throws JDOMException, IOException {
         Set<String> knownStatutoryInstrumentIds = new HashSet<>();
         try {
@@ -516,11 +522,15 @@ public class RdfGatheringAgent {
         model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
     }
 
+    @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "the lang value is checked against a whitelist")
     private Document fetchDoc(File gitDir, String instrumentId, SAXBuilder builder, String lang) throws IOException, JDOMException {
         // The following set of checks and fallbacks is there to address the
         // case where the published legis.xml document is out of sync with the
         // GitHub contents, or where the GitHub content is
         // truncated/faulty/whatever
+        if (!(lang.equals("eng") || lang.equals("fra"))) {
+            throw new IOException("Unexpected langugage code: " + lang);
+        }
         File gitFile = null;
         if (gitDir != null) {
             File langFile = new File(gitDir, lang);
@@ -959,7 +969,7 @@ public class RdfGatheringAgent {
 
     }
 
-    private class RdfParsingErrorHandler implements ErrorHandler {
+    private static class RdfParsingErrorHandler implements ErrorHandler {
 
         private final MutableBoolean pass;
         private final Path path;
