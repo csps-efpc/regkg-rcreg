@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { FormattedMessage, useIntl } from 'react-intl';
 import Button from "react-bootstrap/Button";
 import { Link } from 'react-router-dom';
-import { WalkTheGraphInstruments } from "../../WalkTheGraphInstruments"
+import { TraversablePredicates } from "../../TraversablePredicates"
 /*
   Pages of Use: Search
   Description: View of the reg info and related regs.
@@ -57,7 +57,7 @@ const Information = (props) =>{
 
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id.split("#")[0] + encodeURIComponent("> ?p ?o}")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id.split("#")[0] + encodeURIComponent("> ?p ?o  OPTIONAL { ?o <https://schema.org/schema:name> ?n }}")
     return querySign + selectTerms;
   }
 
@@ -143,7 +143,7 @@ const Information = (props) =>{
       */}
 
       {Object.keys(props.sparqlData[props.id]).map((o, i) => {
-        if(WalkTheGraphInstruments.includes(o))
+        if(TraversablePredicates.includes(o))
           return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${props.language}/instrument/${encodeURIComponent(props.sparqlData[props.id][o])}`}>{props.sparqlData[props.id][o]}</Link></p>
         return <p key={o}><FormattedMessage id={o}/>: {props.sparqlData[props.id][o]}</p>
       })}

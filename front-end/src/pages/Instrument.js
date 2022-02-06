@@ -6,7 +6,7 @@ import {FormattedMessage} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
 import Theme from "../components/Theme"
-import { WalkTheGraphInstruments } from "../components/WalkTheGraphInstruments"
+import { TraversablePredicates } from "../components/TraversablePredicates"
 import { useParams, Link } from 'react-router-dom';
 import { Context } from "../components/lang/LanguageWrapper";
 
@@ -122,7 +122,7 @@ const Instrument = () => {
       */}
       {Object.keys(moreInfo).map((o, i) => {
         if(moreInfo[o].length == 1) {  
-          if(WalkTheGraphInstruments.includes(o)) {// Check if o is in the special link array from above
+          if(TraversablePredicates.includes(o)) {// Check if o is in the special link array from above
             return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
           }
           if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
@@ -133,7 +133,7 @@ const Instrument = () => {
               var rows = [];
               for(var i = 0; i < moreInfo[o].length; i++) {
                 var oo = moreInfo[o][i];
-                if(WalkTheGraphInstruments.includes(o)) {
+                if(TraversablePredicates.includes(o)) {
                     rows.push( <li key={oo + "-" + o}><Link to={`/${currentLang}/instrument/${encodeURIComponent(oo)}`}>{oo}</Link></li> )
                 } else if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
                     rows.push( <li key={oo + "-" + o}><a target="_blank" href={oo}>{oo}</a></li> )
