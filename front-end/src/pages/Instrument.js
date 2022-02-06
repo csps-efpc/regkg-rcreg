@@ -19,8 +19,15 @@ const Instrument = () => {
   const [moreInfo, setMoreInfo] = useState();
   const predicates = [ // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
     //Regex for find: final PropertyImpl .* = new PropertyImpl\(
+    "rdf:Type",
     "https://laws-lois.justice.gc.ca/ext/instrument-id",
+    "https://schema.org/name",
+    "https://schema.org/legislationIdentifier",
+    "https://schema.org/legislationDate",
+    "https://schema.org/url",
     "https://www.gazette.gc.ca/ext/sponsor",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head",
     "https://www.gazette.gc.ca/ext/consultation-word-count",
     "https://schema.org/wordCount",
     "https://laws-lois.justice.gc.ca/ext/section-count",
@@ -28,22 +35,13 @@ const Instrument = () => {
     "https://www.gazette.gc.ca/ext/rias-word-count",
     "https://laws-lois.justice.gc.ca/ext/enabling-act",
     "https://schema.org/legislationChanges",
-    "https://laws-lois.justice.gc.ca/ext/consolidates",
     "https://laws-lois.justice.gc.ca/ext/enables-regulation",
-    "https://schema.org/name",
-    "https://schema.org/url",
-    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name",
-    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head",
     "https://www.csps-efpc.gc.ca/ext/instrument-references",
-    "https://schema.org/legislationIdentifier",
-    "https://schema.org/legislationChanges",
     "https://schema.org/legislationConsolidates",
-    "https://schema.org/legislationDate",
-    "rdf:Type",
   ]
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o}")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n }}")
     return querySign + selectTerms;
   }
 
