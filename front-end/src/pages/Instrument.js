@@ -27,7 +27,7 @@ const Instrument = () => {
     "https://www.gazette.gc.ca/ext/cba-word-count",
     "https://www.gazette.gc.ca/ext/rias-word-count",
     "https://laws-lois.justice.gc.ca/ext/enabling-act",
-    "https://laws-lois.justice.gc.ca/ext/amends-instrument",
+    "https://schema.org/legislationChanges",
     "https://laws-lois.justice.gc.ca/ext/consolidates",
     "https://laws-lois.justice.gc.ca/ext/enables-regulation",
     "https://schema.org/name",
@@ -106,13 +106,7 @@ const Instrument = () => {
   let moreInformationPanel = "";
 
   if(moreInfo){
-    // Link Array is a list of values that can be used to 'walk the graph'
-    const linkArray = [
-      "https://laws-lois.justice.gc.ca/ext/enabling-act",
-      "https://laws-lois.justice.gc.ca/ext/enables-regulation",
-      "https://schema.org/legislationConsolidates",
-      "https://laws-lois.justice.gc.ca/ext/amends-instrument",
-    ]
+    
     moreInformationPanel = 
     <span tabIndex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
       {/*

@@ -37,7 +37,7 @@ const Information = (props) =>{
     "https://www.gazette.gc.ca/ext/cba-word-count",
     "https://www.gazette.gc.ca/ext/rias-word-count",
     "https://laws-lois.justice.gc.ca/ext/enabling-act",
-    "https://laws-lois.justice.gc.ca/ext/amends-instrument",
+    "https://schema.org/legislationChanges",
     "https://laws-lois.justice.gc.ca/ext/consolidates",
     "https://laws-lois.justice.gc.ca/ext/enables-regulation",
     "https://schema.org/name",

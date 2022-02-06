@@ -45,7 +45,7 @@
     "https://www.gazette.gc.ca/ext/sponsor": "Sponsor",
     "https://laws-lois.justice.gc.ca/ext/section-count": "Section Count",
     "https://laws-lois.justice.gc.ca/ext/enabling-act": "Enabling Act",
-    "https://laws-lois.justice.gc.ca/ext/amends-instrument": "Amends Instrument",
+    "https://schema.org/legislationChanges": "Amends Instrument",
     "https://laws-lois.justice.gc.ca/ext/consolidates": "Consolidates",
     "https://laws-lois.justice.gc.ca/ext/enables-regulation": "Enables Regulation",
     "https://schema.org/name": "Name",
