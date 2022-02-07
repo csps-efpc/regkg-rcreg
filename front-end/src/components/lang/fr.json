@@ -45,7 +45,7 @@
     "https://www.gazette.gc.ca/ext/sponsor": "Commanditaire",
     "https://laws-lois.justice.gc.ca/ext/section-count": "Nombre de sections",
     "https://laws-lois.justice.gc.ca/ext/enabling-act": "Loi habilitante",
-    "https://laws-lois.justice.gc.ca/ext/amends-instrument": "Modifie l'instrument",
+    "https://schema.org/legislationChanges": "Modifie l'instrument",
     "https://laws-lois.justice.gc.ca/ext/consolidates": "Consolide",
     "https://laws-lois.justice.gc.ca/ext/enables-regulation": "Habilite la régulation",
     "https://schema.org/name": "Nom",

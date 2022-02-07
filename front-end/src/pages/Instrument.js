@@ -6,7 +6,7 @@ import {FormattedMessage} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
 import Theme from "../components/Theme"
-import { WalkTheGraphInstruments } from "../components/WalkTheGraphInstruments"
+import { TraversablePredicates } from "../components/TraversablePredicates"
 import { useParams, Link } from 'react-router-dom';
 import { Context } from "../components/lang/LanguageWrapper";
 
@@ -19,31 +19,29 @@ const Instrument = () => {
   const [moreInfo, setMoreInfo] = useState();
   const predicates = [ // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
     //Regex for find: final PropertyImpl .* = new PropertyImpl\(
+    "rdf:Type",
     "https://laws-lois.justice.gc.ca/ext/instrument-id",
+    "https://schema.org/name",
+    "https://schema.org/legislationIdentifier",
+    "https://schema.org/legislationDate",
+    "https://schema.org/url",
     "https://www.gazette.gc.ca/ext/sponsor",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name",
+    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head",
     "https://www.gazette.gc.ca/ext/consultation-word-count",
     "https://schema.org/wordCount",
     "https://laws-lois.justice.gc.ca/ext/section-count",
     "https://www.gazette.gc.ca/ext/cba-word-count",
     "https://www.gazette.gc.ca/ext/rias-word-count",
     "https://laws-lois.justice.gc.ca/ext/enabling-act",
-    "https://laws-lois.justice.gc.ca/ext/amends-instrument",
-    "https://laws-lois.justice.gc.ca/ext/consolidates",
-    "https://laws-lois.justice.gc.ca/ext/enables-regulation",
-    "https://schema.org/name",
-    "https://schema.org/url",
-    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/org-name",
-    "https://www.tpsgc-pwgsc.gc.ca/recgen/ext/department-head",
-    "https://www.csps-efpc.gc.ca/ext/instrument-references",
-    "https://schema.org/legislationIdentifier",
     "https://schema.org/legislationChanges",
+    "https://laws-lois.justice.gc.ca/ext/enables-regulation",
+    "https://www.csps-efpc.gc.ca/ext/instrument-references",
     "https://schema.org/legislationConsolidates",
-    "https://schema.org/legislationDate",
-    "rdf:Type",
   ]
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o}")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\""+currentLang+"\" , \"\") )}}")
     return querySign + selectTerms;
   }
 
@@ -84,7 +82,11 @@ const Instrument = () => {
               if(!convertedObject.hasOwnProperty(p)) {
                   convertedObject[p] = [];
               }
-              convertedObject[p].push(object.o.value);
+              var propertyObject = {
+                  "value" : object.o.value,
+                  "label" : (object.n ? object.n.value : object.o.value)
+              };
+              convertedObject[p].push(propertyObject);
           }
         }
       }
@@ -106,13 +108,7 @@ const Instrument = () => {
   let moreInformationPanel = "";
 
   if(moreInfo){
-    // Link Array is a list of values that can be used to 'walk the graph'
-    const linkArray = [
-      "https://laws-lois.justice.gc.ca/ext/enabling-act",
-      "https://laws-lois.justice.gc.ca/ext/enables-regulation",
-      "https://schema.org/legislationConsolidates",
-      "https://laws-lois.justice.gc.ca/ext/amends-instrument",
-    ]
+    
     moreInformationPanel = 
     <span tabIndex="0" className="slight-border px-5 py-1 pt-4 m-2 rounded-3">
       {/*
@@ -122,26 +118,26 @@ const Instrument = () => {
       */}
       {Object.keys(moreInfo).map((o, i) => {
         if(moreInfo[o].length == 1) {  
-          if(WalkTheGraphInstruments.includes(o)) {// Check if o is in the special link array from above
-            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
+          if(TraversablePredicates.includes(o)) {// Check if o is in the special link array from above
+            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o][0].value)}`}>{moreInfo[o][0].label}</Link></p>
           }
           if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
-            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o]}>{moreInfo[o]}</a></p>
+            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o][0].value}>{moreInfo[o][0].label}</a></p>
           }
-          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o]}</p>
+          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o][0].value}</p>
           } else {
               var rows = [];
               for(var i = 0; i < moreInfo[o].length; i++) {
                 var oo = moreInfo[o][i];
-                if(WalkTheGraphInstruments.includes(o)) {
-                    rows.push( <li key={oo + "-" + o}><Link to={`/${currentLang}/instrument/${encodeURIComponent(oo)}`}>{oo}</Link></li> )
+                if(TraversablePredicates.includes(o)) {
+                    rows.push( <li key={oo.value + o}><Link key={oo.value + "-" + o+"-link"} to={`/${currentLang}/instrument/${encodeURIComponent(oo.value)}`}>{oo.label}</Link></li> )
                 } else if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
-                    rows.push( <li key={oo + "-" + o}><a target="_blank" href={oo}>{oo}</a></li> )
+                    rows.push( <li key={oo.value + o}><a target="_blank" href={oo.value}>{oo.value}</a></li> )
                 } else {
-                    rows.push (<li key={oo + "-" + o}> {oo} </li>)
+                    rows.push (<li key={oo.value + o}> {oo.value} </li>)
                 }
               }
-              return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o}>{rows}</ul></>
+              return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o+"-ul"}>{rows}</ul></>
           }
     })}
     </span>
@@ -154,8 +150,8 @@ const Instrument = () => {
 
         {/*Header*/}
         <Row className="">
-          <Col>
-            <h1 className="header">{moreInfo ? moreInfo["https://schema.org/name"] : ""}</h1>
+          <Col> 
+            <h1 className="header">{(moreInfo && moreInfo.hasOwnProperty("https://schema.org/name")) ? moreInfo["https://schema.org/name"][0].value : ""}</h1>
           </Col>
         </Row>
 
