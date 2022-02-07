@@ -41,7 +41,7 @@ const Instrument = () => {
   ]
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n }}")
+    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\""+currentLang+"\" , \"\") )}}")
     return querySign + selectTerms;
   }
 
@@ -82,7 +82,11 @@ const Instrument = () => {
               if(!convertedObject.hasOwnProperty(p)) {
                   convertedObject[p] = [];
               }
-              convertedObject[p].push(object.o.value);
+              var propertyObject = {
+                  "value" : object.o.value,
+                  "label" : (object.n ? object.n.value : object.o.value)
+              };
+              convertedObject[p].push(propertyObject);
           }
         }
       }
@@ -115,25 +119,25 @@ const Instrument = () => {
       {Object.keys(moreInfo).map((o, i) => {
         if(moreInfo[o].length == 1) {  
           if(TraversablePredicates.includes(o)) {// Check if o is in the special link array from above
-            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o])}`}>{moreInfo[o]}</Link></p>
+            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o][0].value)}`}>{moreInfo[o][0].label}</Link></p>
           }
           if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
-            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o]}>{moreInfo[o]}</a></p>
+            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o][0].value}>{moreInfo[o][0].label}</a></p>
           }
-          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o]}</p>
+          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o][0].value}</p>
           } else {
               var rows = [];
               for(var i = 0; i < moreInfo[o].length; i++) {
                 var oo = moreInfo[o][i];
                 if(TraversablePredicates.includes(o)) {
-                    rows.push( <li key={oo + "-" + o}><Link to={`/${currentLang}/instrument/${encodeURIComponent(oo)}`}>{oo}</Link></li> )
+                    rows.push( <li key={oo.value + o}><Link key={oo.value + "-" + o+"-link"} to={`/${currentLang}/instrument/${encodeURIComponent(oo.value)}`}>{oo.label}</Link></li> )
                 } else if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
-                    rows.push( <li key={oo + "-" + o}><a target="_blank" href={oo}>{oo}</a></li> )
+                    rows.push( <li key={oo.value + o}><a target="_blank" href={oo.value}>{oo.value}</a></li> )
                 } else {
-                    rows.push (<li key={oo + "-" + o}> {oo} </li>)
+                    rows.push (<li key={oo.value + o}> {oo.value} </li>)
                 }
               }
-              return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o}>{rows}</ul></>
+              return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o+"-ul"}>{rows}</ul></>
           }
     })}
     </span>
@@ -146,8 +150,8 @@ const Instrument = () => {
 
         {/*Header*/}
         <Row className="">
-          <Col>
-            <h1 className="header">{moreInfo ? moreInfo["https://schema.org/name"] : ""}</h1>
+          <Col> 
+            <h1 className="header">{(moreInfo && moreInfo.hasOwnProperty("https://schema.org/name")) ? moreInfo["https://schema.org/name"][0].value : ""}</h1>
           </Col>
         </Row>
 
