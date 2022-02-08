@@ -116,15 +116,18 @@ const Instrument = () => {
           For each predicate return a new <p> tag
           Example <p>Word Count: 32642</p>
       */}
-      {Object.keys(moreInfo).map((o, i) => {
-        if(moreInfo[o].length == 1) {  
-          if(TraversablePredicates.includes(o)) {// Check if o is in the special link array from above
-            return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o][0].value)}`}>{moreInfo[o][0].label}</Link></p>
-          }
-          if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
-            return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o][0].value}>{moreInfo[o][0].label}</a></p>
-          }
-          return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o][0].value}</p>
+      {
+        //Sorted predicates first, and leftovers at the end in random order.
+        predicates.concat(Object.keys(moreInfo).filter(function(item, index, array) {return !predicates.includes(item);})).map((o, i) => {
+        if(moreInfo.hasOwnProperty(o)) {
+          if(moreInfo[o].length == 1) {  
+            if(TraversablePredicates.includes(o)) {// Check if o is in the special link array from above
+              return  <p key={o}><FormattedMessage id={o}/>: <Link to={`/${currentLang}/instrument/${encodeURIComponent(moreInfo[o][0].value)}`}>{moreInfo[o][0].label}</Link></p>
+            }
+            if(o == "https://schema.org/url") {// special case, if o is a URL to the full text
+              return  <p key={o}><FormattedMessage id={o}/>: <a target="_blank" href={moreInfo[o][0].value}>{moreInfo[o][0].label}</a></p>
+            }
+            return <p key={o}><FormattedMessage id={o}/>: {moreInfo[o][0].value}</p>
           } else {
               var rows = [];
               for(var i = 0; i < moreInfo[o].length; i++) {
@@ -139,6 +142,7 @@ const Instrument = () => {
               }
               return <><p key={o}><FormattedMessage id={o}/>:</p> <ul key={o+"-ul"}>{rows}</ul></>
           }
+        }
     })}
     </span>
   }
