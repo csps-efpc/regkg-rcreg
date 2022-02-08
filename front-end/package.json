@@ -11,10 +11,12 @@
     "react-dom": "^17.0.2",
     "react-intl": "^5.24.0",
     "react-router-dom": "^6.2.1",
-    "react-scripts": "^5.0.0"
+    "react-scripts": "^5.0.0",
+    "d3": "^7.3.0"
   },
   "resolutions": {
-    "immer": "9.0.7"
+    "immer": "9.0.7",
+    "mini-css-extract-plugin": "0.11.3"
   },
   "scripts": {
     "preinstall": "npx npm-force-resolutions",
