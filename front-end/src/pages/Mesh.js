@@ -7,7 +7,7 @@ import Row from "react-bootstrap/Row";
 import Nav from "react-bootstrap/Nav";
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
-import {FormattedMessage} from 'react-intl';
+import {useIntl} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
 import * as d3 from "d3";
@@ -29,7 +29,8 @@ export default function Mesh() {
     const sparqlPath = "/sparql?";
     const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");
     const solrPath = "/search?"
-
+    const intl = useIntl()
+    
     const submitQuery = async() => {
         const langTerms = `text_${currentLang}_txt`;
         const searchTerms = `q=${searchParameterUrl}`;
@@ -140,7 +141,7 @@ export default function Mesh() {
                 edges.push({
                     source: binding.s.value,
                     target: binding.o.value,
-                    name: binding.p.value
+                    name: intl.messages[binding.p.value]
                 });
                 if (binding.hasOwnProperty("n")) {
                     nodeMap.set(binding.o.value, binding.n.value);
