@@ -41,7 +41,7 @@ const Instrument = () => {
   ]
   const queryStringGenerator = (id) => {
     const querySign = "query=";
-    const selectTerms =  encodeURIComponent("SELECT * {<") + id + encodeURIComponent("> ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\""+currentLang+"\" , \"\") )}}")
+    const selectTerms =  encodeURIComponent("SELECT * { <") + id + encodeURIComponent("> ?p ?o FILTER (isURI(?o) || LANG(?o) IN (\""+currentLang+"\" , \"\")) OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\""+currentLang+"\" , \"\"))}}")
     return querySign + selectTerms;
   }
 

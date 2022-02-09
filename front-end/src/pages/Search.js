@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Nav from "react-bootstrap/Nav";
+import {Link} from 'react-router-dom'
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
 import {FormattedMessage} from 'react-intl';
@@ -13,7 +14,7 @@ import Theme from "../components/Theme";
 import QueryBox from "../components/search/QueryBox";
 import SingleResult from "../components/search/result/SingleResult";
 import PaginationQuery from "../components/search/PaginationQuery";
-import { useParams  } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import {Context} from "../components/lang/LanguageWrapper";
 
 const scoresToPercentString = (singleScore, maxScore, decimalCount) => {
@@ -29,8 +30,10 @@ const scoresToPercentString = (singleScore, maxScore, decimalCount) => {
 
 const Search = () => {
 
+  const location = useLocation();
   const langContext = useContext(Context);
   const currentLang = langContext.locale;
+  const { userSearchParam } = useParams();
 
   // Array of object from the search API, no extra data
   const [searchResults, setsearchResults] = useState("");
@@ -66,6 +69,11 @@ const Search = () => {
     setsearchResults("");
     setSparqlData("");
   }, [currentLang]);
+
+  let navigateButton = "";
+    if(searchResults.numFound > 0) {
+      navigateButton = <Link to={"/"+currentLang + "/mesh/" + location.pathname.split("/")[3]}>View as graph</Link>
+    }
 
   // Clear the More Info Sparql Query when the search results are updated.
   useEffect(() => {
@@ -105,6 +113,7 @@ const Search = () => {
       <Container className="px-5 pb-5 pt-3 mb-4 bg-light rounded-3">
         <Row>
           <p>{searchResults.numFound} {contentTranslations.resultCount}</p>
+          {navigateButton}
         </Row>
         <Row>
           {searchResultItems}
@@ -138,7 +147,6 @@ const Search = () => {
           <QueryBox language={currentLang} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset} setPageOffset={setPageOffset}/>
 
         {/*Reference Guide*/}
-          <p></p> 
           <p>{contentTranslations.advancedQueries} <a href="http://www.solrtutorial.com/solr-query-syntax.html"> {contentTranslations.referenceGuide} </a></p>
         </Row>
       </Container>
