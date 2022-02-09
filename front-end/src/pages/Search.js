@@ -4,6 +4,7 @@ import Button from "react-bootstrap/Button";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
 import Nav from "react-bootstrap/Nav";
+import Navbar from "react-bootstrap/Navbar";
 import {Link} from 'react-router-dom'
 import InputGroup from "react-bootstrap/InputGroup";
 import FormControl from "react-bootstrap/FormControl";
@@ -14,7 +15,7 @@ import Theme from "../components/Theme";
 import QueryBox from "../components/search/QueryBox";
 import SingleResult from "../components/search/result/SingleResult";
 import PaginationQuery from "../components/search/PaginationQuery";
-import { useParams, useLocation } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import {Context} from "../components/lang/LanguageWrapper";
 
 const scoresToPercentString = (singleScore, maxScore, decimalCount) => {
@@ -34,6 +35,7 @@ const Search = () => {
   const langContext = useContext(Context);
   const currentLang = langContext.locale;
   const { userSearchParam } = useParams();
+  const navigate = useNavigate();
 
   // Array of object from the search API, no extra data
   const [searchResults, setsearchResults] = useState("");
@@ -47,6 +49,18 @@ const Search = () => {
 
   // Numeric value repsresenting offset for pagination
   const [pageOffset, setPageOffset] = useState(0);
+
+  const contentTranslations = {
+    title : <FormattedMessage id = "app.search.title" />,
+    mainButton : <FormattedMessage id = "app.search.mainButton" />,
+    introduction : <FormattedMessage id = "app.search.introduction" />,
+    advancedQueries : <FormattedMessage id = "app.search.advancedQueries" />,
+    referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
+    relatedItems : <FormattedMessage id = "app.result.related" />,
+    openInNewTab : <FormattedMessage id = "app.result.link" />,
+    resultCount : <FormattedMessage id = "app.search.resultCount" />,
+  }
+
 
   // Catch an update to searchParameterUrl
   // Set the correct states (UI view, and what is sent to API)
@@ -70,9 +84,21 @@ const Search = () => {
     setSparqlData("");
   }, [currentLang]);
 
-  let navigateButton = "";
+  let resultBar = "";
     if(searchResults.numFound > 0) {
-      navigateButton = <Link to={"/"+currentLang + "/mesh/" + location.pathname.split("/")[3]}>View as graph</Link>
+        resultBar = (<Navbar bg="light" expand="lg">
+  <Container>
+    <Navbar.Brand href="#home">{searchResults.numFound} {contentTranslations.resultCount}</Navbar.Brand>
+    <Navbar.Toggle aria-controls="basic-navbar-nav" />
+    <Navbar.Collapse id="basic-navbar-nav">
+      <Nav className="me-auto">
+        <Nav.Link as={Link} to={"/"+currentLang + "/mesh/" + location.pathname.split("/")[3]}><FormattedMessage id = "app.search.viewAsGraph" /></Nav.Link>
+      </Nav>
+    </Navbar.Collapse>
+  </Container>
+</Navbar>)
+    
+//        resultBar = <>{searchResults.numFound} {contentTranslations.resultCount}<Button variant="Secondary" onClick={routeToGraph}></Button></>
     }
 
   // Clear the More Info Sparql Query when the search results are updated.
@@ -85,16 +111,6 @@ const Search = () => {
     }
   }, [searchResults]);
 
-  const contentTranslations = {
-    title : <FormattedMessage id = "app.search.title" />,
-    mainButton : <FormattedMessage id = "app.search.mainButton" />,
-    introduction : <FormattedMessage id = "app.search.introduction" />,
-    advancedQueries : <FormattedMessage id = "app.search.advancedQueries" />,
-    referenceGuide : <FormattedMessage id = "app.search.referenceGuide" />,
-    relatedItems : <FormattedMessage id = "app.result.related" />,
-    openInNewTab : <FormattedMessage id = "app.result.link" />,
-    resultCount : <FormattedMessage id = "app.search.resultCount" />,
-  }
 
   let searchResultJSX = "";
   let searchResultItems = []
@@ -112,8 +128,7 @@ const Search = () => {
       <hr/>
       <Container className="px-5 pb-5 pt-3 mb-4 bg-light rounded-3">
         <Row>
-          <p>{searchResults.numFound} {contentTranslations.resultCount}</p>
-          {navigateButton}
+          {resultBar}
         </Row>
         <Row>
           {searchResultItems}

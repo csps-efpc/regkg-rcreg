@@ -32,9 +32,9 @@ class ForceGraph extends React.Component {
           .distance(100)
           .strength(0.9)
       )
-      .force("x", forceX(this.props.width / 2).strength(0.1))
-      .force("y", forceY(this.props.height / 2).strength(0.1))
-      .force("charge", forceManyBody().strength(-1500))
+      .force("x", forceX(this.props.width / 2).strength(0.7))
+      .force("y", forceY(this.props.height / 2).strength(0.5))
+      .force("charge", forceManyBody().strength(-1200))
       .force("collide", forceCollide(this.props.radius));
 
     this.simulation.on("tick", () =>
