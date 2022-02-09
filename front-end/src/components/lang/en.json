@@ -25,6 +25,7 @@
   	"app.search.searchBoxAria" : "Type Search Terms",
     "app.search.submitButtonAria" : "Submit Search",
     "app.search.resultsControlsAria" : "Search Results Page Control",
+    "app.search.viewAsGraph" : "View as Graph",
     "app.result.related": "Related Regulations",
     "app.result.link": "Open in new tab",
     "app.result.information": "More Information",
