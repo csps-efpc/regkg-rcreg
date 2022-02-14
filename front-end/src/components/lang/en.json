@@ -8,6 +8,7 @@
     "app.navbar.menuHeader": "Menu Header - Links To Home",
     "app.navbar.menuOption": "Menu Option",
     "app.navbar.langToggle": "basculer la langue",
+    "app.help.title": "Query Help",
     "app.home.title": "RegKG",
     "app.home.subtitle": "the regulatory knowledge graph",
     "app.home.callToAction": "Try it now!",
