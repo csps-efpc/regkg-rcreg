@@ -162,7 +162,7 @@ const Search = () => {
           <QueryBox language={currentLang} searchResults={searchResults} setsearchResults={setsearchResults} pageOffset={pageOffset} setPageOffset={setPageOffset}/>
 
         {/*Reference Guide*/}
-          <p>{contentTranslations.advancedQueries} <a href="http://www.solrtutorial.com/solr-query-syntax.html"> {contentTranslations.referenceGuide} </a></p>
+          <p>{contentTranslations.advancedQueries} <Link to="../../help"> {contentTranslations.referenceGuide} </Link></p>
         </Row>
       </Container>
       {searchResultJSX}

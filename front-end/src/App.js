@@ -3,6 +3,7 @@ import { Route, Routes, HashRouter, Navigate } from 'react-router-dom';
 import Home from "./pages/Home"
 import Search from "./pages/Search"
 import Mesh from "./pages/Mesh"
+import Help from "./pages/Help"
 import Instrument from "./pages/Instrument"
 import {Context} from "./components/lang/LanguageWrapper";
 
@@ -25,6 +26,13 @@ const App = () => {
       </Routes>
     )
   } 
+  const HelpRoute = () => {
+    return(
+      <Routes>
+        <Route path="" element={<Help />}></Route>
+      </Routes>
+    )
+  } 
   const EnglishRoute = () => {
     useEffect(() => {
       context.selectLanguage("en");
@@ -34,6 +42,7 @@ const App = () => {
         <Route path="" element={<Home />}></Route>
         <Route path="search/*" element={<SearchRoute />}></Route>
         <Route path="mesh/*" element={<MeshRoute />}></Route>
+        <Route path="help/*" element={<HelpRoute />}></Route>
         <Route path="instrument/:instrumentId" element={<Instrument />}></Route>
       </Routes>
     )
@@ -47,6 +56,7 @@ const App = () => {
         <Route path="" element={<Home />}></Route>
         <Route path="search/*" element={<SearchRoute />}></Route>
         <Route path="mesh/*" element={<MeshRoute />}></Route>
+        <Route path="help/*" element={<HelpRoute />}></Route>
         <Route path="instrument/:instrumentId" element={<Instrument />}></Route>
       </Routes>
     )
