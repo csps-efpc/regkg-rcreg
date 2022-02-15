@@ -55,8 +55,8 @@ const App = () => {
       <Routes>
         <Route path="" element={<Home />}></Route>
         <Route path="search/*" element={<SearchRoute />}></Route>
-        <Route path="mesh/:query" element={<MeshRoute />}></Route>
-        <Route path="help" element={<HelpRoute />}></Route>
+        <Route path="mesh/*" element={<MeshRoute />}></Route>
+        <Route path="help/*" element={<HelpRoute />}></Route>
         <Route path="instrument/:instrumentId" element={<Instrument />}></Route>
       </Routes>
     )
