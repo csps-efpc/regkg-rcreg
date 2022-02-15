@@ -95,28 +95,28 @@ export default function Mesh() {
                 referrerPolicy: 'no-referrer',
                 body: payload // body data type must match "Content-Type" header
             })
-                    .then((resp) => {
-                        return resp.json();
-                    })
-                    .then((data) => {
-                        console.log(data);
-                        setMeshResults(buildMeshResults(data.results.bindings));
-                    })
+            .then((resp) => {
+                return resp.json();
+            })
+            .then((data) => {
+                //console.log(data);
+                setMeshResults(buildMeshResults(data.results.bindings));
+            })
         })
 
-                .catch((error) => {
-                    if (error.message == "app.query.errorNoResults") {
-                        // No results have been found
-                        console.log(error.message);
-                    } else if (error.name == "TypeError" && error.message == "Failed to fetch") {
-                        // Network error (API down, incorrect URL, Accept-Origin, etc.)
-                        console.log("app.query.errorFailedToFetch");
-                    } else {
-                        // Other error happened, log the results and return generic message
-                        console.log(error, "Unseen Error Found");
-                        console.log("app.query.errorGeneric");
-                    }
-                });
+        .catch((error) => {
+            if (error.message == "app.query.errorNoResults") {
+                // No results have been found
+                console.log(error.message);
+            } else if (error.name == "TypeError" && error.message == "Failed to fetch") {
+                // Network error (API down, incorrect URL, Accept-Origin, etc.)
+                console.log("app.query.errorFailedToFetch");
+            } else {
+                // Other error happened, log the results and return generic message
+                console.log(error, "Unseen Error Found");
+                console.log("app.query.errorGeneric");
+            }
+        });
     }
 
     useEffect(() => {
@@ -126,14 +126,17 @@ export default function Mesh() {
 
     const buildMeshResults = (bindings) => {
         var nodeMap = new Map();
+        var hyperlinkMap = new Map();
         var edges = [];
         var nodes = [];
         bindings.forEach((binding) => {
            if(!nodeMap.has(binding.s.value)) {
                nodeMap.set(binding.s.value, binding.s.value.substring(binding.s.value.lastIndexOf("/")));
+               hyperlinkMap.set(binding.s.value, "#/"+currentLang+"/instrument/"+encodeURIComponent(binding.s.value));
            }
            if(!nodeMap.has(binding.o.value) && binding.o.type === "uri") {
                nodeMap.set(binding.o.value, binding.o.value.substring(binding.o.value.lastIndexOf("/")));
+               hyperlinkMap.set(binding.o.value, "#/"+currentLang+"/instrument/"+encodeURIComponent(binding.o.value));
            }
             if (binding.p.value === 'https://schema.org/name') {
                 nodeMap.set(binding.s.value, binding.o.value);
@@ -151,7 +154,8 @@ export default function Mesh() {
         nodeMap.forEach((key, value) => {
             nodes.push({
                 id: value,
-                name: key
+                name: key,
+                href: hyperlinkMap.get(value)
             });
         });
         return {nodes: nodes, links: edges};

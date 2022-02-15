@@ -1,5 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
+
 import {
   forceSimulation,
   forceLink,
@@ -10,6 +11,8 @@ import {
 } from "d3-force";
 
 class ForceGraph extends React.Component {
+
+
   constructor(props) {
     super(props);
 
@@ -17,7 +20,7 @@ class ForceGraph extends React.Component {
       nodes: props.props.nodes,
       links: props.props.links
     };
-
+  
   }
 
   componentDidMount() {
@@ -53,7 +56,7 @@ class ForceGraph extends React.Component {
   render() {
     const { width, radius, height } = this.props;
     const { nodes, links } = this.state;
-
+    
     return (
       <svg className="forceGraph" height={height} width={width}>
         <defs>
@@ -80,8 +83,10 @@ class ForceGraph extends React.Component {
           {
           (nodes ? nodes : []).map((n) => (
             <g>
-              <circle cx={n.x} cy={n.y} r={radius} fill="#FFF" stroke="#000" />
-              <text textAnchor="middle" x={n.x} y={n.y}>
+            <a href={n.href}>
+                <circle cx={n.x} cy={n.y} r={radius} fill="#FFF" stroke="#000" />
+              </a>
+              <text textAnchor="middle" x={n.x} y={n.y - radius}>
                 {n.name}
               </text>
             </g>
