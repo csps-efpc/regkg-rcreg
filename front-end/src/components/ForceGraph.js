@@ -1,6 +1,6 @@
 import React from "react";
 import PropTypes from "prop-types";
-
+import { scaleOrdinal, schemeCategory10 } from "d3";
 import {
   forceSimulation,
   forceLink,
@@ -15,7 +15,7 @@ class ForceGraph extends React.Component {
 
   constructor(props) {
     super(props);
-
+    this.color = scaleOrdinal(schemeCategory10);
     this.state = {
       nodes: props.props.nodes,
       links: props.props.links
@@ -25,7 +25,7 @@ class ForceGraph extends React.Component {
 
   componentDidMount() {
     const { nodes, links } = this.state;
-
+    
     this.simulation = forceSimulation(nodes)
       .force(
         "link",
@@ -99,7 +99,7 @@ class ForceGraph extends React.Component {
               x2={link.target.x }
               y2={link.target.y }
               key={`line-${index}`}
-              stroke="#4679BD"
+              stroke={this.color(link.name)}
               markerEnd="url(#suit)"
             />
             <path
@@ -114,7 +114,7 @@ class ForceGraph extends React.Component {
             <text
             style={{pointerEvents: "none"}}
             fontSize={10}
-            fill="#333"
+            fill={this.color(link.name)}
             ><textPath
             href={"#edge-" + link.source.id + "-" + link.target.id}
             startOffset="50%"
