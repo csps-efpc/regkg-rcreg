@@ -20,7 +20,7 @@
     "app.search.mainButton": "Rechercher",
     "app.search.introduction": "La recherche dans le Réseau de connaissances est alimentée par un moteur flexible. Vous pouvez effectuer une recherche en utilisant des termes simples comme « pêche », « règlements » ou même « règlements de pêche ». Essayez-le!",
     "app.search.advancedQueries": "Si vous voulez en apprendre plus sur les requêtes avancées, voici un ",
-    "app.search.referenceGuide": "guide de références. (Anglais)",
+    "app.search.referenceGuide": "guide de référence.",
     "app.search.searchLabel": "Termes De Recherche",
     "app.search.resultCount": "Résultats de recherche",
     "app.search.searchBoxAria" : "Saisissez les termes de recherche",
