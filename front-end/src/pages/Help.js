@@ -122,27 +122,27 @@ This adds precision to the query, requiring that the term "website" exist, along
 fr:`
 # Termes
       
-Une requête adressée à l'analyseur de requêtes standard est divisée en termes et opérateurs. Il existe deux types de termes : les termes simples et les expressions.
+Une demande dans le programme d'analyse syntaxique est divisée en termes et opérateurs. Il existe deux types de termes : les termes simples et les expressions.
 
-Un seul terme est un seul mot tel que "test" ou "hello"
+Un seul terme est un seul mot tel que "test" ou "allô"
 
-Une phrase est un groupe de mots entourés de guillemets tels que "hello dolly"
+Une phrase est un groupe de mots entourés de guillemets tels que "allô dolly"
 
-Plusieurs termes peuvent être combinés avec des opérateurs booléens pour former des requêtes plus complexes (comme décrit ci-dessous).
+Plusieurs termes peuvent être combinés à l'aide d'opérateurs booléens pour former des requêtes plus complexes (comme décrit ci-dessous).
 
 # Modificateurs de terme
 Les requêtes offrent une variété de modificateurs de terme qui ajoutent de la flexibilité ou de la précision, selon les besoins, aux recherches. Ces modificateurs incluent des caractères génériques, des caractères permettant de rendre une recherche "floue" ou plus générale, etc. Les sections ci-dessous décrivent ces modificateurs en détail.
 
 # Recherches génériques
-L'analyseur de requête offre les recherches de caractères génériques uniques et multiples dans des termes uniques. Les caractères génériques peuvent être appliqués à des termes uniques, mais pas aux expressions de recherche.
+Le programme d'analyse syntaxique permet la recherche de caractères génériques uniques et multiples, mais uniquement dans des termes uniques. Les caractères génériques peuvent être appliqués à des termes uniques, mais pas aux expressions de recherche.
 
 |Type de recherche générique | Caractère spécial|Exemple|
 |----------------------------|------------------|-------|
-|Caractère unique (correspond à un seul caractère)|?|La chaîne de recherche te?t correspondrait à la fois au test et au texte.|
-|Plusieurs caractères (correspond à zéro ou plusieurs caractères séquentiels)|*|La recherche générique : tes* correspondrait à test, testing et tester. Vous pouvez également utiliser des caractères génériques au milieu d'un terme. Par exemple : te*t correspondrait à test et text. *est correspondrait à ravageur et test.|
+|Caractère unique (correspond à un seul caractère)|?|La chaîne de recherche don? correspondrait à la fois aux mots donc et dont.|
+|Plusieurs caractères (correspond à zéro ou plusieurs caractères séquentiels)|*|La recherche générique : tes* correspondrait à test, testing et tester. Vous pouvez également utiliser des caractères génériques au milieu d'un terme. Par exemple : don* correspondrait à donc et dont. *este correspondrait à zeste et peste.|
 
 # Recherches floues
-L'analyseur de requêtes prend en charge les recherches floues basées sur l'algorithme Damerau-Levenshtein Distance ou Edit Distance. Les recherches floues découvrent des termes similaires à un terme spécifié sans nécessairement être une correspondance exacte. Pour effectuer une recherche floue, utilisez le symbole tilde ~ à la fin d'un terme composé d'un seul mot. Par exemple, pour rechercher un terme dont l'orthographe est similaire à "errer", utilisez la recherche approximative :
+Le programme d'analyse syntaxique permet les recherches floues basées sur l'algorithme Damerau-Levenshtein Distance ou Edit Distance. Les recherches floues découvrent des termes similaires à un terme spécifié sans nécessairement être une correspondance exacte. Pour effectuer une recherche floue, utilisez le symbole tilde ~ à la fin d'un terme composé d'un seul mot. Par exemple, pour rechercher un terme dont l'orthographe est similaire à "errer", utilisez la recherche approximative :
 
 errer~
 
@@ -150,38 +150,38 @@ Cette recherche correspondra à des termes tels que roams, foam et foams. Il cor
 
 Un paramètre de distance facultatif spécifie le nombre maximal de modifications autorisées, entre 0 et 2, la valeur par défaut étant 2. Par exemple :
 
-itinérance~ 1
+montre~ 1
 
-Cela correspondra à des termes tels que roams & foam - mais pas à foams car il a une distance d'édition de "2".        
+Cela correspondra à des termes tels que monstre & montrer - mais pas à monstres car il a une distance d'édition de "2".        
 
 # Recherches de proximité
 
 Une recherche de proximité recherche des termes qui se trouvent à une distance spécifique les uns des autres.
 
-Pour effectuer une recherche de proximité, ajoutez le caractère tilde ~ et une valeur numérique à la fin d'une expression de recherche. Par exemple, pour rechercher un « canada » et un « service » à moins de 10 mots l'un de l'autre dans un document, utilisez la recherche :
+Pour effectuer une recherche de proximité, ajoutez le caractère tilde ~ et une valeur numérique à la fin d'une expression de recherche. Par exemple, pour chercher « canada » et « service » à moins de 10 mots l'un de l'autre dans un document, utilisez la recherche:
 
 "service canada"~10
 
-La distance à laquelle il est fait référence ici est le nombre de mouvements de termes nécessaires pour correspondre à la phrase spécifiée. Dans l'exemple ci-dessus, si « canada » et « service » étaient séparés de 10 espaces dans un champ, mais que « canada » apparaissait avant « service », il faudrait plus de 10 déplacements de termes pour rapprocher les termes et positionner « canada » sur le droit de "service" avec un espace entre les deux.
+La distance à laquelle on fait référence ici est le nombre de mouvements de termes nécessaires pour correspondre à la phrase spécifiée. Dans l'exemple ci-dessus, si « canada » et « service » étaient séparés de 10 espaces dans un champ, mais que « canada » apparaissait avant « service », il faudrait plus de 10 déplacements de termes pour rapprocher les termes et positionner « canada » sur le droit de "service" avec un espace entre les deux.
 
 # Opérateurs booléens offerts par l'analyseur de requêtes standard
-Les opérateurs booléens vous permettent d'appliquer une logique booléenne aux requêtes, nécessitant la présence ou l'absence de termes ou de conditions spécifiques dans les champs afin de faire correspondre les documents. Le tableau ci-dessous résume les opérateurs booléens pris en charge par l'analyseur de requêtes standard.
+Les opérateurs booléens vous permettent d'appliquer une logique booléenne aux demandes, nécessitant la présence ou l'absence de termes ou de conditions spécifiques dans les champs afin de faire correspondre les documents. Le tableau ci-dessous résume les opérateurs booléens pris en charge par l'analyseur de requêtes standard.
 
 |Opérateur booléen|Symbole alternatif|Description|
 |-----------------|------------------|-----------|
-|AND|&&|Nécessite que les deux termes de chaque côté de l'opérateur booléen soient présents pour une correspondance.|
-|NOT|!|Nécessite que le terme suivant ne soit pas présent.|
-|OR|\\|\\||Nécessite que l'un des termes (ou les deux) soit présent pour une correspondance.|
-|+| |Nécessite que le terme suivant soit présent.|
-|-| |Interdit le terme suivant (c'est-à-dire les correspondances sur des champs ou des documents qui n'incluent pas ce terme). L'opérateur - est fonctionnellement similaire à l'opérateur booléen !. Parce qu'il est utilisé par des moteurs de recherche populaires tels que Google, il peut être plus familier à certaines communautés d'utilisateurs.|
+|AND|&&|Exige que les deux termes de chaque côté de l'opérateur booléen soient présents pour une correspondance.|
+|NOT|!|Exige que le terme suivant ne soit pas présent.|
+|OR|\\|\\||Exige qu'au moins un des termes soit présent pour une correspondance.|
+|+| |Exige que le terme suivant soit présent.|
+|-| |Interdit le terme suivant (c'est-à-dire les correspondances sur des champs ou des documents qui n'incluent pas ce terme). L'opérateur - est fonctionnellement similaire à l'opérateur booléen !. Parce qu'il est utilisé par des moteurs de recherche populaires tels que Google, il peut être mieux connu par certaines communautés d'utilisateurs.|
 
-Les opérateurs booléens permettent de combiner des termes via des opérateurs logiques. La recherche prend en charge AND, « + », OR, NOT et « - » comme opérateurs booléens.
+Les opérateurs booléens permettent de combiner des termes en utilisant des opérateurs logiques. La recherche prend en charge AND, « + », OR, NOT et « - » comme opérateurs booléens.
 
 Lorsque vous spécifiez des opérateurs booléens avec des mots-clés tels que AND ou NOT, les mots-clés doivent apparaître en majuscules.
 
-L'opérateur OU est l'opérateur de conjonction par défaut. Cela signifie que s'il n'y a pas d'opérateur booléen entre deux termes, l'opérateur OU est utilisé. L'opérateur OU relie deux termes et trouve un document correspondant si l'un des termes existe dans un document. Cela équivaut à une union utilisant des ensembles. Le symbole || peut être utilisé à la place du mot OU.
+L'opérateur OR est l'opérateur de conjonction par défaut. Cela signifie que s'il n'y a pas d'opérateur booléen entre deux termes, l'opérateur OR est utilisé. L'opérateur OR relie deux termes et trouve un document correspondant si l'un des termes existe dans un document. Cela équivaut à une union utilisant des ensembles. Le symbole || peut être utilisé à la place du mot OU.
 
-Pour rechercher des documents qui contiennent soit « service canada », soit simplement « service », utilisez la requête :
+Pour rechercher des documents qui contiennent soit « service canada », soit simplement « service », utilisez la demande:
 
 service "service canada"
 
@@ -190,9 +190,9 @@ ou
 "service canada" OR service
 
 # L'opérateur booléen +
-Le symbole + (également connu sous le nom d'opérateur "obligatoire") nécessite que le terme après le symbole + existe quelque part dans un champ d'au moins un document pour que la requête renvoie une correspondance.
+Le symbole + (également connu sous le nom d'opérateur "obligatoire") nécessite que le terme après le symbole + existe quelque part dans un champ d'au moins un document pour que la demande renvoie une correspondance.
 
-Par exemple, pour rechercher des documents qui doivent contenir « service » et qui peuvent ou non contenir « santé », utilisez la requête suivante :
+Par exemple, pour chercher des documents qui doivent contenir « service » et qui peuvent ou non contenir « santé », utilisez la demande suivante:
 
 +service santé
         
@@ -200,7 +200,7 @@ Par exemple, pour rechercher des documents qui doivent contenir « service » 
 
 L'opérateur NOT exclut les documents qui contiennent le terme après NOT. Cela équivaut à une différence utilisant des ensembles. Le symbole ! peut être utilisé à la place du mot NOT.
 
-Les requêtes suivantes recherchent des documents qui contiennent l'expression « service canada » mais ne contiennent pas l'expression « Service Canada » :
+Les demandes suivantes cherchent des documents qui contiennent l'expression « service canada » mais ne contiennent pas l'expression « Service Canada »:
 
 "service canada" NOT "Service Canada"
 
@@ -209,18 +209,18 @@ Les requêtes suivantes recherchent des documents qui contiennent l'expression �
 # L'opérateur booléen -
 Le symbole - ou l'opérateur "interdire" exclut les documents qui contiennent le terme après le symbole -.
 
-Par exemple, pour rechercher des documents qui contiennent "service canada" mais pas "canada service", utilisez la requête suivante :
+Par exemple, pour rechercher des documents qui contiennent "service canada" mais pas "canada service", utilisez la demande suivante:
 
 "service canada" -"canada service"
 
 # Regroupement de termes pour former des sous-requêtes
-Les requêtes prennent en charge l'utilisation de parenthèses pour regrouper des clauses afin de former des sous-requêtes. Cela peut être très utile si vous souhaitez contrôler la logique booléenne d'une requête.
+Les demandes prennent en charge l'utilisation de parenthèses pour regrouper des clauses afin de former des sous-demandes . Cela peut être très utile si vous souhaitez contrôler la logique booléenne d'une requête.
 
-La requête ci-dessous recherche soit « service », soit « canada » et « santé » :
+La requête ci-dessous recherche soit « service », soit « canada » et « santé »:
 
 (service OR canada) AND santé
 
-Cela ajoute de la précision à la requête, exigeant que le terme "santé" existe, ainsi que les termes "service" et "canada".
+Cela ajoute de la précision à la demande, exigeant que le terme "santé" existe, ainsi que les termes "service" et "canada".
 `
   };
 
