@@ -84,7 +84,7 @@ class ForceGraph extends React.Component {
           (nodes ? nodes : []).map((n) => (
             <g>
             <a href={n.href}>
-                <circle cx={n.x} cy={n.y} r={radius} fill="#FFF" stroke="#000" />
+                <circle cx={n.x} cy={n.y} r={radius} fill={this.color(n.type)} stroke="#000" />
               </a>
               <text textAnchor="middle" x={n.x} y={n.y - radius}>
                 {n.name}

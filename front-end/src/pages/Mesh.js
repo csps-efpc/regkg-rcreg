@@ -78,7 +78,7 @@ export default function Mesh() {
             const subjectList = data.map((p) => {
                 return "<" + p + ">"
             }).join(", ");
-            const queryTerms = "query=" + encodeURIComponent("SELECT ?s ?p ?o ?n {?s ?p ?o OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\"" + currentLang + "\" , \"\"))} FILTER ( (?p IN (<https://schema.org/name>, " + traversablePredicateList + ") && ((LANG(?o) IN (\"" + currentLang + "\" , \"\")) || isURI(?o))) && ?s IN (" + subjectList + "))} LIMIT 100 ")
+            const queryTerms = "query=" + encodeURIComponent("SELECT ?s ?p ?o ?n ?t {?s ?p ?o OPTIONAL { ?o <rdf:Type> ?t} OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\"" + currentLang + "\" , \"\"))} FILTER ( (?p IN (<https://schema.org/name>, " + traversablePredicateList + ") && ((LANG(?o) IN (\"" + currentLang + "\" , \"\")) || isURI(?o))) && ?s IN (" + subjectList + "))} LIMIT 100 ")
             const acceptTerms = "&Accept=application/sparql-results%2Bjson";
             const requestPayload = queryTerms + "&Accept=application/sparql-results%2Bjson";
             return requestPayload;
@@ -127,12 +127,16 @@ export default function Mesh() {
     const buildMeshResults = (bindings) => {
         var nodeMap = new Map();
         var hyperlinkMap = new Map();
+        var typeMap = new Map();
         var edges = [];
         var nodes = [];
         bindings.forEach((binding) => {
            if(!nodeMap.has(binding.s.value)) {
                nodeMap.set(binding.s.value, binding.s.value.substring(binding.s.value.lastIndexOf("/")));
                hyperlinkMap.set(binding.s.value, "#/"+currentLang+"/instrument/"+encodeURIComponent(binding.s.value));
+           }
+           if(!typeMap.has(binding.s.value) && binding.hasOwnProperty("t")) {
+               typeMap.set(binding.s.value, binding.t.value);
            }
            if(!nodeMap.has(binding.o.value) && binding.o.type === "uri") {
                nodeMap.set(binding.o.value, binding.o.value.substring(binding.o.value.lastIndexOf("/")));
@@ -155,7 +159,8 @@ export default function Mesh() {
             nodes.push({
                 id: value,
                 name: key,
-                href: hyperlinkMap.get(value)
+                href: hyperlinkMap.get(value),
+                type: typeMap.get(value)
             });
         });
         return {nodes: nodes, links: edges};
