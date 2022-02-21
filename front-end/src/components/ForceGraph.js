@@ -74,7 +74,7 @@ class ForceGraph extends React.Component {
               d="M 0,-5 L 10 ,0 L 0,5"
               stroke="none"
               fill={"#999"}
-              opacity={0.6}
+              opacity={0.9}
             />
           </marker>
         </defs>
