@@ -88,7 +88,7 @@ const Search = () => {
     if(searchResults.response && searchResults.response.numFound > 0) {
         resultBar = (<Navbar bg="light" expand="lg">
   <Container>
-    <Navbar.Brand href="#home">{searchResults.numFound} {contentTranslations.resultCount}</Navbar.Brand>
+    <Navbar.Brand href="#home">{searchResults.response.numFound} {contentTranslations.resultCount}</Navbar.Brand>
     <Navbar.Toggle aria-controls="basic-navbar-nav" />
     <Navbar.Collapse id="basic-navbar-nav">
       <Nav className="me-auto">
