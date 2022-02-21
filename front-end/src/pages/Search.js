@@ -85,7 +85,7 @@ const Search = () => {
   }, [currentLang]);
 
   let resultBar = "";
-    if(searchResults.numFound > 0) {
+    if(searchResults.response && searchResults.response.numFound > 0) {
         resultBar = (<Navbar bg="light" expand="lg">
   <Container>
     <Navbar.Brand href="#home">{searchResults.numFound} {contentTranslations.resultCount}</Navbar.Brand>
@@ -115,12 +115,13 @@ const Search = () => {
   let searchResultJSX = "";
   let searchResultItems = []
 
-  if (searchResults.docs){
-    for (let doc of Object.entries(searchResults.docs)) {
+  if (searchResults.response && searchResults.response.docs){
+    for (let doc of Object.entries(searchResults.response.docs)) {
       if(doc[1][`text_${currentLang}_txt`]){
-        const score = scoresToPercentString(doc[1].score, searchResults.maxScore, 2);
+        const score = scoresToPercentString(doc[1].score, searchResults.response.maxScore, 2);
+        const highlight = searchResults.highlighting[doc[1].id][`text_${currentLang}_txt`];
         searchResultItems.push(
-          <SingleResult doc={doc[1]} sparqlData={sparqlData} setSparqlData={setSparqlData} language={currentLang} key={doc[1].id} score={score}/>
+          <SingleResult doc={doc[1]} sparqlData={sparqlData} setSparqlData={setSparqlData} language={currentLang} key={doc[1].id} score={score} highlight={highlight}/>
         );
       }
     };

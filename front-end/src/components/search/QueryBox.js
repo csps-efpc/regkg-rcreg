@@ -91,6 +91,7 @@ const QueryBox = (props) => {
 
     fetch(requestURL + new URLSearchParams({
         q:searchQuery,
+        hl:"true",
         df:`text_${props.language}_txt`,
         fl:"*,score",
         start:props.pageOffset,
@@ -115,7 +116,7 @@ const QueryBox = (props) => {
       if(data.response.numFound <= 0){
         throw Error("app.query.errorNoResults");
       }
-      props.setsearchResults(data.response);
+      props.setsearchResults(data);
     })
     .catch((error) => {
       if(error.message == "app.query.errorNoResults"){

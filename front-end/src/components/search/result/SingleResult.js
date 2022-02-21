@@ -36,7 +36,7 @@ const SingleResult = (props) =>{
       </Row>
       {/*<Row><p>{(props.doc[`text_${props.language}_txt`]).toString().slice(0, 150) + "..."}</p></Row>*/}
       <Row>
-        <p tabIndex="0">{(props.doc[`text_${props.language}_txt`])}</p>
+        <p tabIndex="0" dangerouslySetInnerHTML={{__html: props.highlight}}/>
       </Row>
       <Row><span tabIndex="0"><FormattedMessage id="app.result.information.type" />: {typeValue}. <FormattedMessage id="app.result.information.score" />: {props.score}.</span></Row>
       <Row>
