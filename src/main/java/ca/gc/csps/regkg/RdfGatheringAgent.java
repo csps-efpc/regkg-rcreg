@@ -354,7 +354,7 @@ public class RdfGatheringAgent {
                         if (regText.contains("ACT") && regText.indexOf("ACT") < regText.indexOf(" P.C. ")) {
                             startIndex = regText.indexOf("ACT") + 3;
                         }
-                        model.add(subject, nameProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim());
+                        model.add(subject, nameProperty, regText.substring(startIndex, regText.indexOf(" P.C. ")).trim(), "en");
                     }
                     model.add(subject, sponsorProperty, record.get("sponsor"));
                     model.add(subject, cbaWordCountProperty, record.get("CBA.wordcount"));
@@ -440,7 +440,7 @@ public class RdfGatheringAgent {
                         || entry.getKey().startsWith("S.C._")
                         || entry.getKey().startsWith("SI-")
                         || entry.getKey().startsWith("SOR-")) {
-                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.nameProperty, String.valueOf(entry.getValue()));
+                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.nameProperty, String.valueOf(entry.getValue()), "en");
                 } else {
                     System.out.println("Unparsable instrument: [" + entry.getKey() + "] " + entry.getValue());
                 }
@@ -690,7 +690,7 @@ public class RdfGatheringAgent {
                         model.add(ResourceFactory.createResource(regAttributes.get("instrumentURI")), enablingActProperty,
                                 ResourceFactory.createResource(attributes.get("instrumentURI")));
                         model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), rdfTypeProperty,
-                                ResourceFactory.createResource(REG_CLASS_URI));
+                                ResourceFactory.createResource(ACT_CLASS_URI));
                         regAttributes.put(TYPE_FIELD, REG_TYPE_VALUE);
                         model.add(ResourceFactory.createResource(attributes.get("instrumentURI")), enablesRegProperty,
                                 ResourceFactory.createResource(regAttributes.get("instrumentURI")));
