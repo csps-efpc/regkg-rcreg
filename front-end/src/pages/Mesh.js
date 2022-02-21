@@ -32,6 +32,8 @@ export default function Mesh() {
     const intl = useIntl()
     
     const submitQuery = async() => {
+        if(location.hash.startsWith("#/"+currentLang+"/")) {
+
         const langTerms = `text_${currentLang}_txt`;
         const searchTerms = `q=${searchParameterUrl}`;
         const requestURL = API_PREFIX + solrPath;
@@ -117,7 +119,7 @@ export default function Mesh() {
                 console.log("app.query.errorGeneric");
             }
         });
-    }
+    }}
 
     useEffect(() => {
         submitQuery();
