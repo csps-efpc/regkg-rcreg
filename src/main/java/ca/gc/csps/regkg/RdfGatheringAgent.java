@@ -78,7 +78,7 @@ public class RdfGatheringAgent {
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
-    private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL
+    private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2021/2021-09-30-c3/?-eng.html";
 
     private static final String ACT_CLASS_URI = "https://canada.ca/ext/act-loi";
@@ -367,7 +367,9 @@ public class RdfGatheringAgent {
 
     /**
      * Insert the Consolidated Index of Statutory Instruments from the Canada
-     * Gazette into the given model.
+     * Gazette into the given model. This implementation is messy; the regs
+     * around reg identifiers disagree between french and english, and the index
+     * is asymmetrical as a result.
      *
      * @param model The RDF model into which the triples should be added.
      * @return the set of statutory instrument IDs discovered during the
@@ -384,7 +386,7 @@ public class RdfGatheringAgent {
             Map<String, String> statutoryInstruments = new TreeMap<>();
             String[] sections = "a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,other-autre".split(",");
             for (String section : sections) {
-                URL u = new URL(CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_URL.replace("?", section));
+                URL u = new URL(CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL.replace("?", section));
                 Logger.getLogger(RdfGatheringAgent.class
                         .getName()).log(Level.INFO, "Fetching {0}", u.toExternalForm());
                 try {
@@ -805,6 +807,14 @@ public class RdfGatheringAgent {
             if (title == null) {
                 title = identification.getChildTextNormalize("InstrumentNumber");
             }
+
+            // If there isn't already a name property in the model for this instrument, use the one we have here. 
+            // This is to patch up the Consolidated Index of Statutory Instruments from the CG.
+            org.apache.jena.rdf.model.Statement existingNameProperty = model.getProperty(instrumentURI, nameProperty, lang);
+            if (existingNameProperty == null) {
+                model.add(instrumentURI, nameProperty, title, lang);
+            }
+
             if (title == null) {
                 title = instrumentId;
             }
