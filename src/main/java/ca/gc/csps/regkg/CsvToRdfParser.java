@@ -46,8 +46,13 @@ public class CsvToRdfParser {
     }
 
     public void parse(File inputFile, Charset charset, Model model) throws IOException {
-        try (FileReader in = new FileReader(inputFile.getAbsoluteFile(), charset)) {
-            CSVParser records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
+        try ( FileReader in = new FileReader(inputFile.getAbsoluteFile(), charset)) {
+            CSVParser records = org.apache.commons.csv.CSVFormat.Builder
+                    .create(CSVFormat.DEFAULT)
+                    .setHeader()
+                    .setIgnoreSurroundingSpaces(true)
+                    .setNullString("")
+                    .build().parse(in);
             List<String> headerNames = records.getHeaderNames();
             String subjectPrefix = headerNames.get(0);
             for (String predicateSpec : headerNames) {

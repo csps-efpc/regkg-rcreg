@@ -18,7 +18,6 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,13 +29,11 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import net.sourceforge.htmlunit.corejs.javascript.ast.Jump;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
-import org.apache.jena.datatypes.RDFDatatype;
 import org.apache.jena.datatypes.xsd.impl.XSDDateType;
 import org.apache.jena.rdf.model.AnonId;
 import org.apache.jena.rdf.model.Literal;
@@ -45,6 +42,7 @@ import org.apache.jena.rdf.model.RDFVisitor;
 import org.apache.jena.rdf.model.ResIterator;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.ResourceFactory;
+import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.apache.jena.rdf.model.impl.PropertyImpl;
 import org.apache.jena.riot.RDFParser;
@@ -175,7 +173,7 @@ public class RdfGatheringAgent {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try ( FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
             Iterator<Map.Entry<String, Map<String, String>>> it = index.entrySet().iterator();
             while (it.hasNext()) {
@@ -208,64 +206,63 @@ public class RdfGatheringAgent {
         // Setup DDL/SQL is pulled from a resource called "/ddl.sql"
         // Optimization is pulled from a resource called "finalize.sql"
         try {
-            Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path);
-            try (Statement stmt = conn.createStatement()) {
-                String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
-                String lines[] = ddlFile.split("\\r?\\n");
-                for (String line : lines) {
-                    stmt.execute(line);
+            try ( Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path)) {
+                try ( java.sql.Statement stmt = conn.createStatement()) {
+                    String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
+                    String lines[] = ddlFile.split("\\r?\\n");
+                    for (String line : lines) {
+                        stmt.execute(line);
+                    }
                 }
-            }
-            conn.setAutoCommit(false);
-            try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
-                StmtIterator stmts = model.listStatements();
-                while (stmts.hasNext()) {
-                    //Namespace conflict for JDBC Statements and Jena Statements!
-                    org.apache.jena.rdf.model.Statement triple = stmts.nextStatement();
-                    String rdfObject = (String) triple.getObject().visitWith(new RDFVisitor() {
-                        @Override
-                        public Object visitBlank(Resource r, AnonId id) {
-                            return id.toString();
-                        }
+                conn.setAutoCommit(false);
+                try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
+                    StmtIterator stmts = model.listStatements();
+                    while (stmts.hasNext()) {
+                        Statement triple = stmts.nextStatement();
+                        String rdfObject = (String) triple.getObject().visitWith(new RDFVisitor() {
+                            @Override
+                            public Object visitBlank(Resource r, AnonId id) {
+                                return id.toString();
+                            }
 
-                        @Override
-                        public Object visitURI(Resource r, String uri) {
-                            return model.shortForm(uri);
-                        }
+                            @Override
+                            public Object visitURI(Resource r, String uri) {
+                                return model.shortForm(uri);
+                            }
 
-                        @Override
-                        public Object visitLiteral(Literal l) {
-                            return "\"" + l.getLexicalForm() + "\"";
+                            @Override
+                            public Object visitLiteral(Literal l) {
+                                return "\"" + l.getLexicalForm() + "\"";
+                            }
+                        });
+                        if (triple.getSubject().getURI() != null && triple.getPredicate().getURI() != null) {
+                            stmt.setString(1, model.shortForm(triple.getSubject().getURI()));
+                            stmt.setString(2, rdfObject);
+                            stmt.setString(3, model.shortForm(triple.getPredicate().getURI()));
+                            stmt.execute();
                         }
-                    });
-                    if (triple.getSubject().getURI() != null && triple.getPredicate().getURI() != null) {
-                        stmt.setString(1, model.shortForm(triple.getSubject().getURI()));
-                        stmt.setString(2, rdfObject);
-                        stmt.setString(3, model.shortForm(triple.getPredicate().getURI()));
+                    }
+
+                    stmt.execute();
+                }
+                for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
+                    try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
+                        stmt.setString(1, entry.getKey());
+                        stmt.setString(2, entry.getValue());
+                        System.out.println(entry.getKey() + " -> " + entry.getValue());
                         stmt.execute();
                     }
                 }
-
-                stmt.execute();
-            }
-            for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
-                try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
-                    stmt.setString(1, entry.getKey());
-                    stmt.setString(2, entry.getValue());
-                    System.out.println(entry.getKey() + " -> " + entry.getValue());
-                    stmt.execute();
+                conn.commit();
+                conn.setAutoCommit(true);
+                try ( java.sql.Statement stmt = conn.createStatement()) {
+                    String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
+                    String lines[] = ddlFile.split("\\r?\\n");
+                    for (String line : lines) {
+                        stmt.execute(line);
+                    }
                 }
             }
-            conn.commit();
-            conn.setAutoCommit(true);
-            try (Statement stmt = conn.createStatement()) {
-                String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
-                String lines[] = ddlFile.split("\\r?\\n");
-                for (String line : lines) {
-                    stmt.execute(line);
-                }
-            }
-            conn.close();
         } catch (SQLException ex) {
             Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -280,14 +277,19 @@ public class RdfGatheringAgent {
      * @throws IOException
      */
     public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws IOException {
-        try (FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
-            Iterable<CSVRecord> records = CSVFormat.DEFAULT.withNullString("").withIgnoreSurroundingSpaces().withHeader().parse(in);
+        try ( FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
+             Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder
+                     .create(CSVFormat.DEFAULT)
+                     .setHeader()
+                     .setIgnoreSurroundingSpaces(true)
+                     .setNullString("")
+                     .build().parse(in);
             for (CSVRecord record : records) {
                 String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
                 final Resource subject = ResourceFactory.createResource(resourceURI);
                 StringBuilder textEn = new StringBuilder();
                 StringBuilder textFr = new StringBuilder();
-                Map<String, String> index = searchIndex.getOrDefault(resourceURI, new HashMap<String, String>());
+                Map<String, String> index = searchIndex.getOrDefault(resourceURI, new HashMap<>());
                 if (record.get("ORGNAME_EN") != null && !record.get("ORGNAME_EN").trim().isEmpty()) {
                     model.add(subject, orgnameProperty, record.get("ORGNAME_EN"));
                     textEn.append(record.get("ORGNAME_EN"));
@@ -318,8 +320,8 @@ public class RdfGatheringAgent {
     public void fetchAndParseMetadata(Model model) throws IOException {
         File file = new File("metadata.csv");
         if (file.exists()) {
-            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
-                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
+            try ( FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+                Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().build().parse(in);
                 for (CSVRecord record : records) {
                     final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("instrument_number")));
                     if (record.get("category_item_desc_en") != null && !record.get("category_item_desc_en").isEmpty()) {
@@ -334,9 +336,8 @@ public class RdfGatheringAgent {
         // Parse the regacan set from UQAM. Need to find a long-term home for this.
         File file = new File("regcan.csv");
         if (file.exists()) {
-            try (
-                    FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
-                Iterable<CSVRecord> records = CSVFormat.DEFAULT.withHeader().parse(in);
+            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+                Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().build().parse(in);
                 for (CSVRecord record : records) {
                     // The "SOR" identifiers Justice uses in their URLs are mangled, because the real strings use reserved URL characters.
                     final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("ID")));
@@ -463,12 +464,12 @@ public class RdfGatheringAgent {
 
         // At this point we either have the documents, or have thrown an exception.
         String enUrl = null;
-        org.apache.jena.rdf.model.Statement enUrlProperty = model.getProperty(instrumentURI, urlProperty, "en");
+        Statement enUrlProperty = model.getProperty(instrumentURI, urlProperty, "en");
         if (enUrlProperty != null) {
             enUrl = enUrlProperty.getString();
         }
         String frUrl = null;
-        org.apache.jena.rdf.model.Statement frUrlProperty = model.getProperty(instrumentURI, urlProperty, "fr");
+        Statement frUrlProperty = model.getProperty(instrumentURI, urlProperty, "fr");
         if (frUrlProperty != null) {
             frUrl = frUrlProperty.getString();
         }
@@ -567,7 +568,7 @@ public class RdfGatheringAgent {
             String limsId = section.getAttributeValue("id", limsNamespace);
             if (limsId != null) {
                 String sectionURI = instrumentURI.getURI() + "#" + limsId;
-                Map<String, String> sectionindex = searchIndex.getOrDefault(sectionURI, new HashMap<String, String>());
+                Map<String, String> sectionindex = searchIndex.getOrDefault(sectionURI, new HashMap<>());
                 sectionindex.put(textField, collectTextFrom(section).toString());
                 sectionindex.put(titleField, shortTitle);
                 sectionindex.put(TYPE_FIELD, type);
@@ -783,7 +784,7 @@ public class RdfGatheringAgent {
             }
         }
         String type = null;
-        org.apache.jena.rdf.model.Statement typeStatement = model.getProperty(instrumentURI, rdfTypeProperty);
+        Statement typeStatement = model.getProperty(instrumentURI, rdfTypeProperty);
         if (typeStatement != null) {
             if (typeStatement.getResource().getURI().equals(ACT_CLASS_URI)) {
                 type = ACT_TYPE_VALUE;
@@ -810,7 +811,7 @@ public class RdfGatheringAgent {
 
             // If there isn't already a name property in the model for this instrument, use the one we have here. 
             // This is to patch up the Consolidated Index of Statutory Instruments from the CG.
-            org.apache.jena.rdf.model.Statement existingNameProperty = model.getProperty(instrumentURI, nameProperty, lang);
+            Statement existingNameProperty = model.getProperty(instrumentURI, nameProperty, lang);
             if (existingNameProperty == null) {
                 model.add(instrumentURI, nameProperty, title, lang);
             }
@@ -818,7 +819,7 @@ public class RdfGatheringAgent {
             if (title == null) {
                 title = instrumentId;
             }
-            Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<String, String>());
+            Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<>());
             index.put(textFieldName, collectTextFrom(identification).toString());
             index.put(titleFieldName, title);
             if (url != null) {
@@ -849,7 +850,7 @@ public class RdfGatheringAgent {
         while (namedSubjects.hasNext()) {
             Resource subject = namedSubjects.nextResource();
             if (subject.getURI().startsWith(STATUTORY_INSTRUMENT_PREFIX)) {
-                org.apache.jena.rdf.model.Statement nameStatement = model.getProperty(subject, nameProperty, "en");
+                Statement nameStatement = model.getProperty(subject, nameProperty, "en");
                 if (nameStatement == null) {
                     nameStatement = model.getProperty(subject, nameProperty);
                 }
@@ -919,7 +920,7 @@ public class RdfGatheringAgent {
                         ResourceFactory.createResource(OIC_CLASS_URI));
 
                 model.add(subject, nameProperty, name, "en");
-                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
+                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<>());
                 index.put(TYPE_FIELD, OIC_TYPE_VALUE);
                 index.put(TEXT_FIELD_ENGLISH, precis);
                 index.put(TITLE_FIELD_ENGLISH, name);
@@ -965,7 +966,7 @@ public class RdfGatheringAgent {
                 }
                 final Resource subject = ResourceFactory.createResource(instrumentURI);
                 model.add(subject, nameProperty, name, "fr");
-                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<String, String>());
+                Map<String, String> index = searchIndex.getOrDefault(instrumentURI, new HashMap<>());
                 index.put(TEXT_FIELD_FRENCH, precis);
                 index.put(TITLE_FIELD_FRENCH, name);
                 if (url != null) {
