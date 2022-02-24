@@ -16,18 +16,19 @@ const Api = () => {
   const API_PREFIX = (process.env.REACT_APP_API_PREFIX ? process.env.REACT_APP_API_PREFIX : "");
   const contentTranslations = {
       en:`
+
 This application is powered by a pair of read-only server-side APIs.
         
-The first, an [Apache SOLR]{https://solr.apache.org/} search endpoint, is found at [${API_PREFIX}/search]{${API_PREFIX}/search?q=*:*}
+The first, an [Apache SOLR](https://solr.apache.org/) search endpoint, is found at [${API_PREFIX}/search](${API_PREFIX}/search?q=*:*)
         
-The second, a [SPARQL]{https://www.w3.org/TR/sparql11-overview/} endpoint, is found at ${API_PREFIX}/sparql{${API_PREFIX}/sparql?query=%0A%0ASELECT+%3Fs+%3Fp+%3Fo%0AWHERE+%7B%0A++%3Fs+%3Fp+%3Fo%0A%7D%0ALIMIT+5}
+The second, a [SPARQL](https://www.w3.org/TR/sparql11-overview/) endpoint, is found at [${API_PREFIX}/sparql](${API_PREFIX}/sparql?query=%0A%0ASELECT+%3Fs+%3Fp+%3Fo%0AWHERE+%7B%0A++%3Fs+%3Fp+%3Fo%0A%7D%0ALIMIT+5)
 `,        
 fr:`
 Cette application est alimentée par une paire d'API côté serveur en mode lecture seule.
 
-Le premier, un point terminal [Apache SOLR]{https://solr.apache.org/), est accessible au [${API_PREFIX}/search]{${API_PREFIX}/search?q=*:*}
+Le premier, un point terminal [Apache SOLR](https://solr.apache.org/), est accessible au [${API_PREFIX}/search](${API_PREFIX}/search?q=*:*)
 
-Le deuxième, un point terminal SPARQL, est accessible au ${API_PREFIX}/sparql{${API_PREFIX}/sparql?query=%0A%0ASELECT+%3Fs+%3Fp+%3Fo%0AWHERE+%7B%0A++%3Fs+%3Fp+%3Fo%0A%7D%0ALIMIT+5}
+Le deuxième, un point terminal SPARQL, est accessible au [${API_PREFIX}/sparql](${API_PREFIX}/sparql?query=%0A%0ASELECT+%3Fs+%3Fp+%3Fo%0AWHERE+%7B%0A++%3Fs+%3Fp+%3Fo%0A%7D%0ALIMIT+5)
 `
   };
 
