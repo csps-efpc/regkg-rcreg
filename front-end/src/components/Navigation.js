@@ -59,7 +59,7 @@ const Navigation = () => {
     title : <FormattedMessage id = "app.navbar.title" />,
     home : <FormattedMessage id = "app.navbar.home" />,
     search : <FormattedMessage id = "app.navbar.search" />,
-    about : <FormattedMessage id = "app.navbar.about" />,
+    api : <FormattedMessage id = "app.navbar.api" />,
     contact : <FormattedMessage id = "app.navbar.contact" />,
     language : <FormattedMessage id = "app.navbar.language" />,
   }
@@ -68,7 +68,7 @@ const Navigation = () => {
     title : useIntl().formatMessage({id: "app.navbar.title"}),
     home : useIntl().formatMessage({id: "app.navbar.home"}),
     search : useIntl().formatMessage({id: "app.navbar.search"}),
-    about : useIntl().formatMessage({id: "app.navbar.about"}),
+    api : useIntl().formatMessage({id: "app.navbar.api"}),
     contact : useIntl().formatMessage({id: "app.navbar.contact"}),
     language : useIntl().formatMessage({id: "app.navbar.language"}),
     menuHeader : useIntl().formatMessage({id: "app.navbar.menuHeader"}),
@@ -94,7 +94,7 @@ const Navigation = () => {
           <Nav className="me-auto">
             <Nav.Link as={Link} aria-label={ariaTranslations.home + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.home}</Nav.Link>
             <Nav.Link as={Link} aria-label={ariaTranslations.search + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/search/"}>{navbarTranslations.search}</Nav.Link>
-            <Nav.Link as={Link} aria-label={ariaTranslations.about + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.about}</Nav.Link>
+            <Nav.Link as={Link} aria-label={ariaTranslations.api + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/api/"}>{navbarTranslations.api}</Nav.Link>
             <Nav.Link as={Link} aria-label={ariaTranslations.contact + " " + ariaTranslations.menuOption} to={"/" + navbarLang + "/"}>{navbarTranslations.contact}</Nav.Link>
           </Nav>
         </Navbar.Collapse>

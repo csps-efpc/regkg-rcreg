@@ -1,8 +1,9 @@
 {
+    "app.api.title": "API",
     "app.navbar.title": "RCreg",
     "app.navbar.home": "Accueil",
     "app.navbar.search": "Recherche",
-    "app.navbar.about": "À propos",
+    "app.navbar.api": "API",
     "app.navbar.contact": "Contactez",
     "app.navbar.language": "English",
     "app.navbar.menuHeader": "En-tête de menu - Liens vers Accueil",
