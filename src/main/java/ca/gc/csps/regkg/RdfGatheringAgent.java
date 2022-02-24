@@ -101,6 +101,7 @@ public class RdfGatheringAgent {
     private static final String REFERENCE_SECTION_MARKER = ", s. ";
     private static final String REFERENCE_SECTIONS_MARKER = ", ss. ";
     private static final String OTHER_THAN_STATUTORY_AUTHORITY = "Other Than Statutory Authority";
+    private static final String NONE_STATUTORY_AUTHORITY = "None";
 
     // Declare the set of predicates that we'll be generating programmatically. The justice ones are all made-up.
     final PropertyImpl legislationIdentifierProperty = new PropertyImpl("https://schema.org/legislationIdentifier");
@@ -907,7 +908,7 @@ public class RdfGatheringAgent {
                         if (enablingSubject != null) {
                             model.add(subject, enablingActProperty, enablingSubject);
                         } else {
-                            if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY)) {
+                            if (!act.equals(OTHER_THAN_STATUTORY_AUTHORITY) && !act.equals(NONE_STATUTORY_AUTHORITY)) {
                                 Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.WARNING, "Unknown enabling act \"{0}\" found on page {1}", new Object[]{act, driver.getCurrentUrl()});
                             }
                         }
