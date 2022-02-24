@@ -67,9 +67,9 @@ export default function Mesh() {
                     var set = new Set();
                     data.response.docs.forEach((i) => {
                         if(!i.id.indexOf("#") > 0) {
-                            set.add(i.id);
-                        } else {
                             set.add(i.id.substring(0, i.id.indexOf("#")));
+                        } else {
+                            set.add(i.id);
                         }
                     });
                     return Array.from(set);
