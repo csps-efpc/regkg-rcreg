@@ -39,6 +39,7 @@ const Instrument = () => {
     "https://www.csps-efpc.gc.ca/ext/instrument-references",
     "https://schema.org/legislationConsolidates",
     "https://laws-lois.justice.gc.ca/ext/order-implements",
+    "https://laws-lois.justice.gc.ca/ext/enabling-order",
 
   ]
   const queryStringGenerator = (id) => {

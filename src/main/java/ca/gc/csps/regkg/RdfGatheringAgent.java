@@ -114,6 +114,7 @@ public class RdfGatheringAgent {
     final PropertyImpl enablingActProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-act");
     final PropertyImpl legislationAmendsProperty = new PropertyImpl("https://schema.org/legislationChanges");
     final PropertyImpl orderImplementsProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/order-implements");
+    final PropertyImpl enablingOrderProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-order");
     final PropertyImpl consolidatesProperty = new PropertyImpl("https://schema.org/legislationConsolidates");
     final PropertyImpl enablesRegProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enables-regulation");
     final PropertyImpl nameProperty = new PropertyImpl("https://schema.org/name");
@@ -487,6 +488,7 @@ public class RdfGatheringAgent {
                     String orderNumber = regMakerOrderElement.getChildText("OrderNumber").replaceAll("[^0-9\\-]", "");
                     final Resource orderURI = ResourceFactory.createResource(ORDER_IN_COUNCIL_PREFIX + orderNumber);
                     model.add(orderURI, orderImplementsProperty, instrumentURI);
+                    model.add(instrumentURI, enablingOrderProperty, orderURI);
                 }
             }
         }
