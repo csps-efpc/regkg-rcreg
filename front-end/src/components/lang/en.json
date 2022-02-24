@@ -1,8 +1,9 @@
 {
+    "app.api.title": "API",
     "app.navbar.title": "RegKG",
     "app.navbar.home": "Home",
     "app.navbar.search": "Search",
-    "app.navbar.about": "About",
+    "app.navbar.api": "API",
     "app.navbar.contact": "Contact",
     "app.navbar.language": "Français",
     "app.navbar.menuHeader": "Menu Header - Links To Home",
