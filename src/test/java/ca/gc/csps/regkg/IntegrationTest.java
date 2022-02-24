@@ -73,8 +73,8 @@ public class IntegrationTest {
         // Add the Metadata facts to the model.
         agent.fetchAndParseMetadata(model);
 
-        // Add the acts and regs facts to the model.
-        agent.fetchAndParseOrdersInCouncil(model, searchIndex, 250);
+        // Add the Orders-In-Council facts to the model.
+        agent.fetchAndParseOrdersInCouncil(model, searchIndex, 2500);
 
         Assertions.assertTrue(pass, "RDF parsing errors occurred.");
         System.out.println("Parsed " + model.size() + " triples.");
