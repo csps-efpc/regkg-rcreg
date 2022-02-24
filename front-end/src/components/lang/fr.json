@@ -60,6 +60,7 @@
     "https://schema.org/legislationConsolidates": "la législation consolide",
     "https://schema.org/legislationDate": "Législation Date",
     "https://laws-lois.justice.gc.ca/ext/order-implements": "Décret implemente",
+    "https://laws-lois.justice.gc.ca/ext/enabling-order" : "Décret habilitant",
 
     "rdf:Type": "Type"
 }
