@@ -113,6 +113,7 @@ public class RdfGatheringAgent {
     final PropertyImpl riasWordCountProperty = new PropertyImpl("https://www.gazette.gc.ca/ext/rias-word-count");
     final PropertyImpl enablingActProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-act");
     final PropertyImpl legislationAmendsProperty = new PropertyImpl("https://schema.org/legislationChanges");
+    final PropertyImpl orderImplementsProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/order-implements");
     final PropertyImpl consolidatesProperty = new PropertyImpl("https://schema.org/legislationConsolidates");
     final PropertyImpl enablesRegProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enables-regulation");
     final PropertyImpl nameProperty = new PropertyImpl("https://schema.org/name");
@@ -174,7 +175,7 @@ public class RdfGatheringAgent {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try ( FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
             Iterator<Map.Entry<String, Map<String, String>>> it = index.entrySet().iterator();
             while (it.hasNext()) {
@@ -207,8 +208,8 @@ public class RdfGatheringAgent {
         // Setup DDL/SQL is pulled from a resource called "/ddl.sql"
         // Optimization is pulled from a resource called "finalize.sql"
         try {
-            try ( Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path)) {
-                try ( java.sql.Statement stmt = conn.createStatement()) {
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path)) {
+                try (java.sql.Statement stmt = conn.createStatement()) {
                     String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
                     String lines[] = ddlFile.split("\\r?\\n");
                     for (String line : lines) {
@@ -216,7 +217,7 @@ public class RdfGatheringAgent {
                     }
                 }
                 conn.setAutoCommit(false);
-                try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
+                try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
                     StmtIterator stmts = model.listStatements();
                     while (stmts.hasNext()) {
                         Statement triple = stmts.nextStatement();
@@ -247,7 +248,7 @@ public class RdfGatheringAgent {
                     stmt.execute();
                 }
                 for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
-                    try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
+                    try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
                         stmt.setString(1, entry.getKey());
                         stmt.setString(2, entry.getValue());
                         System.out.println(entry.getKey() + " -> " + entry.getValue());
@@ -256,7 +257,7 @@ public class RdfGatheringAgent {
                 }
                 conn.commit();
                 conn.setAutoCommit(true);
-                try ( java.sql.Statement stmt = conn.createStatement()) {
+                try (java.sql.Statement stmt = conn.createStatement()) {
                     String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
                     String lines[] = ddlFile.split("\\r?\\n");
                     for (String line : lines) {
@@ -278,13 +279,13 @@ public class RdfGatheringAgent {
      * @throws IOException
      */
     public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws IOException {
-        try ( FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
-             Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder
-                     .create(CSVFormat.DEFAULT)
-                     .setHeader()
-                     .setIgnoreSurroundingSpaces(true)
-                     .setNullString("")
-                     .build().parse(in);
+        try (FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
+            Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder
+                    .create(CSVFormat.DEFAULT)
+                    .setHeader()
+                    .setIgnoreSurroundingSpaces(true)
+                    .setNullString("")
+                    .build().parse(in);
             for (CSVRecord record : records) {
                 String resourceURI = ORG_ID_PREFIX + record.get("ORG_ID").trim();
                 final Resource subject = ResourceFactory.createResource(resourceURI);
@@ -321,7 +322,7 @@ public class RdfGatheringAgent {
     public void fetchAndParseMetadata(Model model) throws IOException {
         File file = new File("metadata.csv");
         if (file.exists()) {
-            try ( FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
                 Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().build().parse(in);
                 for (CSVRecord record : records) {
                     final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("instrument_number")));
@@ -479,8 +480,19 @@ public class RdfGatheringAgent {
         indexConsolidatedInstrument(engDoc, model, instrumentURI, instrumentId, searchIndex, "en", enUrl);
         indexConsolidatedInstrument(fraDoc, model, instrumentURI, frenchId, searchIndex, "fr", frUrl);
         TreeSet<String> amendingRegIds = new TreeSet<>();
-        if (engDoc.getRootElement().getChild("Body") != null) {
-            for (Element section : engDoc.getRootElement().getChild("Body").getChildren("Section")) {
+        for (Element identificationElement : engDoc.getRootElement().getChildren("Identification")) {
+            for (Element regMakerOrderElement : identificationElement.getChildren("RegulationMakerOrder")) {
+                if (regMakerOrderElement.getChildText("RegulationMaker") != null && regMakerOrderElement.getChildText("RegulationMaker").equals("P.C.")) {
+                    // Whitelist regex is necessary becuase the justice XML has stray characters.
+                    String orderNumber = regMakerOrderElement.getChildText("OrderNumber").replaceAll("[^0-9\\-]", "");
+                    final Resource orderURI = ResourceFactory.createResource(ORDER_IN_COUNCIL_PREFIX + orderNumber);
+                    model.add(orderURI, orderImplementsProperty, instrumentURI);
+                }
+            }
+        }
+        final Element bodyElement = engDoc.getRootElement().getChild("Body");
+        if (bodyElement != null) {
+            for (Element section : bodyElement.getChildren("Section")) {
                 sectionCount++;
                 for (Element historicalNote : section.getChildren("HistoricalNote")) {
                     for (Element historicalNoteSubItem : historicalNote.getChildren("HistoricalNoteSubItem")) {
