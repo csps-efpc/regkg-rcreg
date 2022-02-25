@@ -484,8 +484,7 @@ public class RdfGatheringAgent {
         for (Element identificationElement : engDoc.getRootElement().getChildren("Identification")) {
             for (Element regMakerOrderElement : identificationElement.getChildren("RegulationMakerOrder")) {
                 if (regMakerOrderElement.getChildText("RegulationMaker") != null && regMakerOrderElement.getChildText("RegulationMaker").equals("P.C.")) {
-                    // Whitelist regex is necessary becuase the justice XML has stray characters.
-                    String orderNumber = regMakerOrderElement.getChildText("OrderNumber").replaceAll("[^0-9\\-]", "");
+                    String orderNumber = normalizeOICNumber(regMakerOrderElement.getChildText("OrderNumber"));
                     final Resource orderURI = ResourceFactory.createResource(ORDER_IN_COUNCIL_PREFIX + orderNumber);
                     model.add(orderURI, orderImplementsProperty, instrumentURI);
                     model.add(instrumentURI, enablingOrderProperty, orderURI);
@@ -538,6 +537,27 @@ public class RdfGatheringAgent {
             model.add(amendingReg, legislationAmendsProperty, instrumentURI);
         }
         model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
+    }
+
+    /**
+     * Converts PC numbers to Order-In-Council IDs. In various parts of the
+     * regulatory corpus, the OIC numbers are changed into "P.C." numbers which
+     * don't conform to the OIC format.
+     *
+     * @param orderNumber a PC or OIC number
+     * @return an OIC identifier.
+     * @throws NumberFormatException if the input's sequence part can't be
+     * parsed as an integer.
+     */
+    String normalizeOICNumber(String orderNumber) throws NumberFormatException {
+        // There are em-dashes in the data.
+        orderNumber = orderNumber.replace('–', '-');
+        // Whitelist regex is necessary becuase the justice XML has stray characters.
+        orderNumber = orderNumber.replaceAll("[^0-9\\-]", "");
+        // We have to massage the order numbers because of the difference between PC numbers and the actual OIC identfiers.
+        String[] parts = orderNumber.split("-");
+        orderNumber = parts[0].trim() + "-" + String.format("%04d", Integer.parseInt(parts[1]));
+        return orderNumber;
     }
 
     @SuppressFBWarnings(value = "PATH_TRAVERSAL_IN", justification = "the lang value is checked against a whitelist")

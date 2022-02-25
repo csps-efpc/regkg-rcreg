@@ -59,7 +59,7 @@ public class IntegrationTest {
         // Try to pull the latest Acts & Regs from GitHub
         agent.cacheActsAndRegsFromGitHub(gitDir);
 
-      knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
+        knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
         // Add local facts and prefixes to the model.
         agent.fetchAndParseDepartments(model, searchIndex);
