@@ -19,7 +19,7 @@ import org.mapdb.Serializer;
  */
 public class IntegrationTest {
 
-    private static final String TDB_BUILD_PATH = "./target/build.tdb";
+    private static final String ANOMALY_BUILD_PATH = "./target/anomalies.txt";
     private static final String TTL_BUILD_PATH = "./target/out.ttl";
     private static final String SQLITE_BUILD_PATH = "./target/out.sqlite3";
     private static final String INDEX_BUILD_PATH = "./target/out.json";
@@ -55,7 +55,6 @@ public class IntegrationTest {
         // Add local facts and prefixes to the model.
         boolean pass = agent.fetchAndParseLocalTriples(new File("rdf"), model);
 
-
         // Try to pull the latest Acts & Regs from GitHub
         agent.cacheActsAndRegsFromGitHub(gitDir);
 
@@ -69,7 +68,7 @@ public class IntegrationTest {
 
         // Add the acts and regs facts to the model.
         agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex, gitDir);
-        
+
         // Add the Metadata facts to the model.
         agent.fetchAndParseMetadata(model);
 
@@ -80,7 +79,7 @@ public class IntegrationTest {
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }
@@ -89,6 +88,12 @@ public class IntegrationTest {
         agent.writeModelToSqlite(model, SQLITE_BUILD_PATH);
         // Write the index out as SOLR-formatted JSON
         agent.writeIndexToJson(searchIndex, new File(INDEX_BUILD_PATH));
+
+        // Write the anomaly report out
+        try (FileOutputStream fos = new FileOutputStream(new File(ANOMALY_BUILD_PATH))) {
+            agent.getAnomalies().writeReport(fos);
+            fos.flush();
+        }
     }
 
 }
