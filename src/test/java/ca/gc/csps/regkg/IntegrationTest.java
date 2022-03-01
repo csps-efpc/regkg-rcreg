@@ -59,8 +59,9 @@ public class IntegrationTest {
         agent.cacheActsAndRegsFromGitHub(gitDir);
 
         // Add the Canada Gazette Part II facts to the model.
-        agent.fetchAndParseCanadaGazettePartII(model, searchIndex);
+        knownStatutoryInstruments.addAll(agent.fetchAndParseCanadaGazettePartII(model, searchIndex));
 
+        // Add the CG index of statutory instruments to the model.
         knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
         // Add local facts and prefixes to the model.

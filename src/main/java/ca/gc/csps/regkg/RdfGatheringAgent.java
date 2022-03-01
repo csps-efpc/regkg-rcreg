@@ -535,7 +535,7 @@ public class RdfGatheringAgent {
                             } else {
                                 // We may have to come up with a routine to figure out the shorthand that got used here.
                                 // System.out.println("Unknown reference to amending instrument: " + toUrlSafeId(ref) + " from (" + ref + ")");
-//                                anomalies.report(instrumentURI.getURI(), "Unknown Reference to amending instrument: " + ref);
+                                anomalies.report(instrumentURI.getURI(), "Unknown Reference to amending instrument: " + ref);
                             }
                         }
                     }
@@ -1025,13 +1025,17 @@ public class RdfGatheringAgent {
 
     /**
      * Add whatever is possible from the Canada Gazette Part II using a
-     * screen-scraper, since 2011. It's anticipated that this method will break and need to
-     * be rewritten when the modernization work they're doing advances.
+     * screen-scraper, since 2011. It's anticipated that this method will break
+     * and need to be rewritten when the modernization work they're doing
+     * advances.
      *
      * @param model the model to which the triples should be added
      * @param searchIndex the search index to which the text should be added.
+     * @return the set of URL-safe statutory instrument IDs discovered in the
+     * CG.
      */
-    void fetchAndParseCanadaGazettePartII(Model model, Map<String, Map<String, String>> searchIndex) {
+    Set<String> fetchAndParseCanadaGazettePartII(Model model, Map<String, Map<String, String>> searchIndex) {
+        Set<String> statutoryInstrumentIds = new TreeSet<>();
         WebDriver driver = new HtmlUnitDriver(false);
         driver.get(CG_PART_II_ENGLISH_URL);
         System.out.println(driver.getTitle());
@@ -1095,7 +1099,15 @@ public class RdfGatheringAgent {
                                 model.add(instrumentURI, legislationIdentifierProperty, line, "en");
                                 model.add(instrumentURI, rdfTypeProperty,
                                         ResourceFactory.createResource(REG_CLASS_URI));
+                                Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<>());
+                                // The title is the only descriptive text we can get without retrieving every single instrument.
+                                index.put(TEXT_FIELD_ENGLISH, title);
+                                index.put(TITLE_FIELD_ENGLISH, title);
+                                index.put(LINK_FIELD_ENGLISH, href);
+                                searchIndex.put(instrumentURI.getURI(), index);
+                                statutoryInstrumentIds.add(toUrlSafeId(line));
                             } catch (MalformedURLException ex) {
+                                anomalies.report(driver.getCurrentUrl(), "Cannot resolve " + link + " against this base URL.");
                                 ex.printStackTrace();
                             }
                         }
@@ -1122,6 +1134,12 @@ public class RdfGatheringAgent {
                                 model.add(instrumentURI, nameProperty, title, "fr");
                                 model.add(instrumentURI, urlProperty, href, "fr");
                                 model.add(instrumentURI, legislationIdentifierProperty, line, "fr");
+                                Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<>());
+                                // As in English, the title is the only descriptive text we can get.
+                                index.put(TEXT_FIELD_FRENCH, title);
+                                index.put(TITLE_FIELD_FRENCH, title);
+                                index.put(LINK_FIELD_FRENCH, href);
+                                searchIndex.put(instrumentURI.getURI(), index);
                             } catch (MalformedURLException ex) {
                                 ex.printStackTrace();
                             }
@@ -1130,7 +1148,7 @@ public class RdfGatheringAgent {
                 }
             }
         }
-
+        return statutoryInstrumentIds;
     }
 
     private static class RdfParsingErrorHandler implements ErrorHandler {
