@@ -19,6 +19,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,6 +61,7 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.Elements;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 
 /**
@@ -78,6 +80,7 @@ public class RdfGatheringAgent {
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL
             = "https://canadagazette.gc.ca/rp-pr/p2/2021/2021-09-30-c3/?-eng.html";
+    private static final String CG_PART_II_ENGLISH_URL = "https://gazette.gc.ca/rp-pr/publications-eng.html";
 
     private static final String ACT_CLASS_URI = "https://canada.ca/ext/act-loi";
     private static final String REG_CLASS_URI = "https://canada.ca/ext/regulation-reglement";
@@ -1010,6 +1013,116 @@ public class RdfGatheringAgent {
                 searchIndex.put(instrumentURI, index);
 
                 //ResIterator namedResources = model.listResourcesWithProperty(this.nameProperty);
+            }
+        }
+
+    }
+
+    /**
+     * Add whatever is possible from the Canada Gazette Part II using a
+     * screen-scraper, since 2011. It's anticipated that this method will break and need to
+     * be rewritten when the modernization work they're doing advances.
+     *
+     * @param model the model to which the triples should be added
+     * @param searchIndex the search index to which the text should be added.
+     */
+    void fetchAndParseCanadaGazettePartII(Model model, Map<String, Map<String, String>> searchIndex) {
+        WebDriver driver = new HtmlUnitDriver(false);
+        driver.get(CG_PART_II_ENGLISH_URL);
+        System.out.println(driver.getTitle());
+        Set<String> editions = new TreeSet<>();
+        List<WebElement> lis = driver.findElements(By.tagName("li"));
+        for (WebElement li : lis) {
+            final String text = li.getText();
+            if (text != null && text.contains("Canada Gazette, Part II: Volume")) {
+                //HTML only available since 2012.
+                if (Integer.parseInt(text.substring(0, text.indexOf(":"))) > 2011) {
+                    try {
+                        String href = new URL(new URL(driver.getCurrentUrl()), li.findElement(By.tagName("a")).getDomAttribute("href")).toExternalForm();
+                        editions.add(href);
+                    } catch (MalformedURLException ex) {
+                        ex.printStackTrace();
+                    }
+                }
+            }
+        }
+        TreeSet<String> publicationURLs = new TreeSet<>();
+        for (String edition : editions) {
+            driver.get(edition);
+            System.out.println(driver.getTitle());
+            System.out.println(driver.getCurrentUrl());
+            List<WebElement> editionRows = driver.findElement(By.tagName("table")).findElements(By.tagName("tr"));
+            for (WebElement tr : editionRows) {
+                List<WebElement> indexLinks = tr.findElements(By.tagName("a"));
+                for (WebElement indexLink : indexLinks) {
+                    final String link = indexLink.getAttribute("href");
+                    if (link != null && link.endsWith(".html")) {
+                        try {
+                            String href = new URL(new URL(driver.getCurrentUrl()), link).toExternalForm();
+                            publicationURLs.add(href);
+                        } catch (MalformedURLException ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            }
+        }
+        for (String publicationURL : publicationURLs) {
+            // First we fetch the English...
+            driver.get(publicationURL);
+            System.out.println(driver.getTitle());
+            System.out.println(driver.getCurrentUrl());
+            List<WebElement> instrumentParasEn = driver.findElement(By.tagName("main")).findElements(By.tagName("li"));
+            for (WebElement tr : instrumentParasEn) {
+                String[] lines = tr.getText().split("\\r?\\n");
+                for (String line : lines) {
+                    line = line.trim();
+                    if (line.startsWith("SI/") || line.startsWith("SOR/")) {
+                        WebElement aTag = tr.findElement(By.tagName("a"));
+                        final String link = aTag.getAttribute("href");
+                        if (link != null && link.endsWith(".html")) {
+                            try {
+                                String href = new URL(new URL(driver.getCurrentUrl()), link).toExternalForm();
+                                String title = aTag.getText().trim().replace('\n', ' ');
+                                final Resource instrumentURI = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(line));
+                                model.add(instrumentURI, nameProperty, title, "en");
+                                model.add(instrumentURI, urlProperty, href, "en");
+                                model.add(instrumentURI, legislationIdentifierProperty, line, "en");
+                                model.add(instrumentURI, rdfTypeProperty,
+                                        ResourceFactory.createResource(REG_CLASS_URI));
+                            } catch (MalformedURLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+            // And then we fetch the corresponding French.
+            driver.get(publicationURL.replace("index-eng.html", "index-fra.html"));
+            System.out.println(driver.getTitle());
+            System.out.println(driver.getCurrentUrl());
+            List<WebElement> instrumentParasFr = driver.findElement(By.tagName("main")).findElements(By.tagName("li"));
+            for (WebElement tr : instrumentParasFr) {
+                String[] lines = tr.getText().split("\\r?\\n");
+                for (String line : lines) {
+                    line = line.trim();
+                    if (line.startsWith("TR/") || line.startsWith("DORS/")) {
+                        WebElement aTag = tr.findElement(By.tagName("a"));
+                        final String link = aTag.getAttribute("href");
+                        if (link != null && link.endsWith(".html")) {
+                            try {
+                                String href = new URL(new URL(driver.getCurrentUrl()), link).toExternalForm();
+                                String title = aTag.getText().trim().replace('\n', ' ');
+                                final Resource instrumentURI = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(line.replace("TR/", "SI/").replace("DORS/", "SOR/")));
+                                model.add(instrumentURI, nameProperty, title, "fr");
+                                model.add(instrumentURI, urlProperty, href, "fr");
+                                model.add(instrumentURI, legislationIdentifierProperty, line, "fr");
+                            } catch (MalformedURLException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                }
             }
         }
 

@@ -55,9 +55,11 @@ public class IntegrationTest {
         // Add local facts and prefixes to the model.
         boolean pass = agent.fetchAndParseLocalTriples(new File("rdf"), model);
 
-
         // Try to pull the latest Acts & Regs from GitHub
         agent.cacheActsAndRegsFromGitHub(gitDir);
+
+        // Add the Canada Gazette Part II facts to the model.
+        agent.fetchAndParseCanadaGazettePartII(model, searchIndex);
 
         knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
@@ -69,7 +71,7 @@ public class IntegrationTest {
 
         // Add the acts and regs facts to the model.
         agent.fetchAndParseActsAndConsolidatedRegs(model, knownStatutoryInstruments, searchIndex, gitDir);
-        
+
         // Add the Metadata facts to the model.
         agent.fetchAndParseMetadata(model);
 
@@ -80,7 +82,7 @@ public class IntegrationTest {
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }
