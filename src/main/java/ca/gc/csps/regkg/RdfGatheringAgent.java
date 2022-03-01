@@ -1,5 +1,7 @@
 package ca.gc.csps.regkg;
 
+import ca.gc.csps.regkg.anomaly.IAnomalyReporter;
+import ca.gc.csps.regkg.anomaly.SimpleAnomalyReporterImpl;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
@@ -70,6 +72,8 @@ import org.openqa.selenium.htmlunit.HtmlUnitDriver;
  */
 public class RdfGatheringAgent {
 
+    private static final String JUSTICE_LAWS_GIT = "https://github.com/justicecanada/laws-lois-xml.git";
+
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
     private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
@@ -127,6 +131,8 @@ public class RdfGatheringAgent {
     final PropertyImpl metadataLabelProperty = new PropertyImpl("https://www.csps-efpc.gc.ca/ext/instrument-references");
     final PropertyImpl legislationDateProperty = new PropertyImpl("https://schema.org/legislationDate");
     final PropertyImpl rdfTypeProperty = new PropertyImpl("rdf:Type");
+
+    private IAnomalyReporter anomalies = new SimpleAnomalyReporterImpl();
 
     /**
      * Recursively read local files into the given model.
@@ -437,6 +443,7 @@ public class RdfGatheringAgent {
                         }
                     }
                 } catch (IOException ex) {
+                    anomalies.report(u.toExternalForm(), "Could not be loaded: " + ex.getMessage());
                     Logger.getLogger(RdfGatheringAgent.class
                             .getName()).log(Level.WARNING, "Failed to fetch " + u.toExternalForm(), ex);
                 }
@@ -451,6 +458,7 @@ public class RdfGatheringAgent {
                         || entry.getKey().startsWith("SOR-")) {
                     model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.nameProperty, String.valueOf(entry.getValue()), "en");
                 } else {
+                    anomalies.report(CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL, "Unparsable Instrument: [" + entry.getKey() + "] " + entry.getValue());
                     System.out.println("Unparsable instrument: [" + entry.getKey() + "] " + entry.getValue());
                 }
             }
@@ -461,7 +469,7 @@ public class RdfGatheringAgent {
         return knownStatutoryInstrumentIds;
     }
 
-    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, String> unknownStatutoryInstrumentIds, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
+    private void fetchAndParseConsolidatedStatutoryInstrument(Model model, String instrumentId, Set<String> statutoryInstrumentIds, Map<String, Map<String, String>> searchIndex, File gitDir) throws JDOMException, IOException {
         final Resource instrumentURI = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + instrumentId);
         SAXBuilder builder = new SAXBuilder();
         Document engDoc = fetchDoc(gitDir, instrumentId, builder, "eng");
@@ -527,7 +535,7 @@ public class RdfGatheringAgent {
                             } else {
                                 // We may have to come up with a routine to figure out the shorthand that got used here.
                                 // System.out.println("Unknown reference to amending instrument: " + toUrlSafeId(ref) + " from (" + ref + ")");
-                                unknownStatutoryInstrumentIds.put(ref, item);
+//                                anomalies.report(instrumentURI.getURI(), "Unknown Reference to amending instrument: " + ref);
                             }
                         }
                     }
@@ -589,6 +597,7 @@ public class RdfGatheringAgent {
                 System.out.println(gitFile.getPath());
                 doc = builder.build(gitFile);
             } catch (IOException | JDOMException ex) {
+                anomalies.report(gitFile.toURI().toASCIIString(), "Failed to parse: " + ex.getMessage());
                 Logger.getLogger(RdfGatheringAgent.class
                         .getName()).log(Level.WARNING, "Failed to parse " + gitFile.getPath(), ex);
             }
@@ -630,7 +639,7 @@ public class RdfGatheringAgent {
                 Logger.getLogger(RdfGatheringAgent.class
                         .getName()).log(Level.INFO, "No local copy of Acts & Regs found, cloning from GitHub.");
                 Git.cloneRepository()
-                        .setURI("https://github.com/justicecanada/laws-lois-xml.git")
+                        .setURI(JUSTICE_LAWS_GIT)
                         .setDirectory(gitDir)
                         .call();
             }
@@ -660,7 +669,6 @@ public class RdfGatheringAgent {
         Map<String, Map<String, String>> actIdToAttributes = new HashMap<>();
         Map<String, Map<String, String>> regIdToAttributes = new HashMap<>();
         List<String> statutoryInstrumentIds = new ArrayList<>();
-        TreeMap<String, String> unknownStatutoryInstrumentIds = new TreeMap<>();
         //Map the XML reference ids to the actual unique ID for each.
         for (Element regElement : regList) {
             final String language = regElement.getChildText("Language").substring(0, 2);
@@ -761,12 +769,8 @@ public class RdfGatheringAgent {
             }
         }
         for (String statutoryInstrumentId : statutoryInstrumentIds) {
-            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, unknownStatutoryInstrumentIds, searchIndex, gitDir);
+            fetchAndParseConsolidatedStatutoryInstrument(model, toUrlSafeId(statutoryInstrumentId), knownStatutoryInstruments, searchIndex, gitDir);
         }
-        for (Map.Entry<String, String> entry : unknownStatutoryInstrumentIds.entrySet()) {
-            System.out.println("Unknown Statutory Instrument ID: [" + entry.getKey() + "] from \"" + entry.getValue() + "\"");
-        }
-        System.out.println("Number of Unknown Statutory Instruments references: " + unknownStatutoryInstrumentIds.size());
         Logger.getLogger(RdfGatheringAgent.class
                 .getName()).log(Level.INFO, "English Acts: {0}", englishActCount);
         Logger.getLogger(RdfGatheringAgent.class
@@ -855,6 +859,7 @@ public class RdfGatheringAgent {
             }
 
             if (title == null) {
+                anomalies.report(instrumentURI.getURI(), "Has neither a ShortTitle nor a LongTitle attribute, nor even an InstrumentNumber.");
                 title = instrumentId;
             }
             Map<String, String> index = searchIndex.getOrDefault(instrumentURI.getURI(), new HashMap<>());
@@ -1158,6 +1163,13 @@ public class RdfGatheringAgent {
         private void logParseEvent(String level, long line, long col, String message) {
             System.err.println(level + ": " + path + " " + line + ":" + col + " - " + message);
         }
+    }
+
+    /**
+     * @return the anomalies
+     */
+    public IAnomalyReporter getAnomalies() {
+        return anomalies;
     }
 
 }
