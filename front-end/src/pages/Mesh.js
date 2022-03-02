@@ -32,6 +32,8 @@ export default function Mesh() {
     const intl = useIntl()
     
     const submitQuery = async() => {
+        if(location.hash.startsWith("#/"+currentLang+"/")) {
+
         const langTerms = `text_${currentLang}_txt`;
         const searchTerms = `q=${searchParameterUrl}`;
         const requestURL = API_PREFIX + solrPath;
@@ -64,10 +66,10 @@ export default function Mesh() {
                     }
                     var set = new Set();
                     data.response.docs.forEach((i) => {
-                        if(!i.id.indexOf("#") > 0) {
-                            set.add(i.id);
-                        } else {
+                        if(i.id.indexOf("#") > 0) {
                             set.add(i.id.substring(0, i.id.indexOf("#")));
+                        } else {
+                            set.add(i.id);
                         }
                     });
                     return Array.from(set);
@@ -117,7 +119,7 @@ export default function Mesh() {
                 console.log("app.query.errorGeneric");
             }
         });
-    }
+    }}
 
     useEffect(() => {
         submitQuery();
