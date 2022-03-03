@@ -58,7 +58,8 @@ identifiers are inconsistent between the English and French versions of the Act
 purposes of establishing a unique identifier. Where identifiers contain `/` 
 characters, a dash `-` is substituted. Where identifiers contain spaces, an 
 underscore `_` is substituted. These substitutions are made to resolve 
-regulation ID conflicts with the URI schema defined in RFC3986. 
+regulation ID conflicts with the URI schema defined in RFC3986. Note that this 
+namespace holds both the amending regulations and their consolidated forms.
 
 * https://orders-in-council.canada.ca/ - entities in this namespace are 
 Canadian orders-in-council. The namespace is suffixed with the numeric 
