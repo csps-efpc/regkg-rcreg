@@ -1,5 +1,6 @@
 {
     "app.api.title": "API",
+    "app.logo.alt": "Regulatory Knowledge Graph Logo",
     "app.navbar.title": "RegKG",
     "app.navbar.home": "Home",
     "app.navbar.search": "Search",

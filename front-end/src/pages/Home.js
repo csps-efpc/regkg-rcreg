@@ -2,14 +2,18 @@ import React, { useState, useContext } from "react";
 import Container from "react-bootstrap/Container";
 import Col from "react-bootstrap/Col";
 import Row from "react-bootstrap/Row";
+import Image from 'react-bootstrap/Image'
 import {Link} from 'react-router-dom'
-import {FormattedMessage} from 'react-intl';
+import {FormattedMessage, useIntl} from 'react-intl';
 import "../style.css";
 import logo from "../img/logo.svg";
 import Theme from "../components/Theme"
 
 
 const Home = () => {
+
+  const intl = useIntl();
+
 
   const contentTranslations = {
     paragraph : [
@@ -27,11 +31,23 @@ const Home = () => {
     <Theme>
       {/*Content*/}
       <Container className="p-5 mb-4 bg-light rounded-3">
-
+      <Row className="justify-content-md-center">
+        <Col md="auto" >
+          <Image
+            src={logo}
+            alt={intl.messages["app.logo.alt"]}
+            width="120"
+            height="120"
+            fluid="true"
+            className="bg-primary img-rounded border-primary rounded"
+            style={{ border: '10px solid' }}
+          />
+        </Col>
+      </Row>
         {/*Header*/}
         <Row className="">
           <Col>
-            <h1 className="header">{contentTranslations.title}</h1>
+          <h1 className="header">{contentTranslations.title}</h1>
           </Col>
         </Row>
 
