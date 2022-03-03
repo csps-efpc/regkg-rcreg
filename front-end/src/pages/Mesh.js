@@ -80,7 +80,7 @@ export default function Mesh() {
             const subjectList = data.map((p) => {
                 return "<" + p + ">"
             }).join(", ");
-            const queryTerms = "query=" + encodeURIComponent("SELECT ?s ?p ?o ?n ?t {?s ?p ?o OPTIONAL { ?o <rdf:Type> ?t} OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\"" + currentLang + "\" , \"\"))} FILTER ( (?p IN (<https://schema.org/name>, " + traversablePredicateList + ") && ((LANG(?o) IN (\"" + currentLang + "\" , \"\")) || isURI(?o))) && ?s IN (" + subjectList + "))} LIMIT 100 ")
+            const queryTerms = "query=" + encodeURIComponent("SELECT ?s ?p ?o ?n ?t {?s ?p ?o OPTIONAL { ?o <rdf:Type> ?t} OPTIONAL { ?o <https://schema.org/name> ?n FILTER (LANG(?n) IN (\"" + currentLang + "\" , \"\"))} FILTER ( (?p IN (<https://schema.org/name>, " + traversablePredicateList + ") && ((LANG(?o) IN (\"" + currentLang + "\" , \"\")) || isURI(?o))) && ?s IN (" + subjectList + "))} LIMIT 1000 ")
             const acceptTerms = "&Accept=application/sparql-results%2Bjson";
             const requestPayload = queryTerms + "&Accept=application/sparql-results%2Bjson";
             return requestPayload;
