@@ -7,6 +7,8 @@ To demonstrate that the output format need not be restricted to RDF native forma
 
 Because the business domain chosen (Canadian Federal Regulations) is text-rich, the same process take the opportunity to create a text index of the instruments it assembles in a simple JSON format that just happens to be the same format expected by Apache SOLR. A simple example of a SOLR schema is inclded in the root of the repository. 
 
+**As of March 4, 2022, this project has completed its development goals. Maintenance is limited to security updates until such time as the steering committee approves additional development. Interested parties are encouraged to communicate with incubate-incuber@csps-efpc.gc.ca for briefings, expressions of interest, etc. As permissively-licensed OSS, community-contributed PRs are always welcome!**
+
 ## Building Data Files
 Building this project requires Java 17 and Maven to be on your command line path.
 ```
