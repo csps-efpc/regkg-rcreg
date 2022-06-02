@@ -75,10 +75,10 @@ public class RdfGatheringAgent {
     private static final String JUSTICE_LAWS_GIT = "https://github.com/justicecanada/laws-lois-xml.git";
 
     private static final String STATUTORY_INSTRUMENT_PREFIX = "https://www.canada.ca/en/privy-council/ext/statutory-instrument/";
-    private static final String ANNUAL_STATUTE_URL_PREFIX = "https://laws.justice.gc.ca/eng/AnnualStatutes/"; // Suffix with "year underscore chapter"
     private static final String ORDER_IN_COUNCIL_PREFIX = "https://orders-in-council.canada.ca/";
     private static final String ORG_ID_PREFIX = "https://www.tpsgc-pwgsc.gc.ca/recgen/orgid/";
 
+    private static final String ANNUAL_STATUTES_ENGLISH_URL = "https://laws-lois.justice.gc.ca/eng/AnnualStatutes/index.html";
     private static final String LEGIS_URL = "https://laws-lois.justice.gc.ca/eng/XML/Legis.xml";
     private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
@@ -185,7 +185,7 @@ public class RdfGatheringAgent {
             Files.delete(targetFile.toPath());
         }
         Gson gson = new GsonBuilder().create();
-        try (FileOutputStream fos = new FileOutputStream(targetFile)) {
+        try ( FileOutputStream fos = new FileOutputStream(targetFile)) {
             fos.write("[\n".getBytes(UTF8));
             Iterator<Map.Entry<String, Map<String, String>>> it = index.entrySet().iterator();
             while (it.hasNext()) {
@@ -218,8 +218,8 @@ public class RdfGatheringAgent {
         // Setup DDL/SQL is pulled from a resource called "/ddl.sql"
         // Optimization is pulled from a resource called "finalize.sql"
         try {
-            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path)) {
-                try (java.sql.Statement stmt = conn.createStatement()) {
+            try ( Connection conn = DriverManager.getConnection("jdbc:sqlite:" + path)) {
+                try ( java.sql.Statement stmt = conn.createStatement()) {
                     String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/ddl.sql"), "UTF-8");
                     String lines[] = ddlFile.split("\\r?\\n");
                     for (String line : lines) {
@@ -227,7 +227,7 @@ public class RdfGatheringAgent {
                     }
                 }
                 conn.setAutoCommit(false);
-                try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
+                try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO TRIPLES (SUBJECT, OBJECT, PREDICATE) VALUES (?, ?, ?)")) {
                     StmtIterator stmts = model.listStatements();
                     while (stmts.hasNext()) {
                         Statement triple = stmts.nextStatement();
@@ -258,7 +258,7 @@ public class RdfGatheringAgent {
                     stmt.execute();
                 }
                 for (Map.Entry<String, String> entry : model.getNsPrefixMap().entrySet()) {
-                    try (PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
+                    try ( PreparedStatement stmt = conn.prepareStatement("INSERT INTO PREFIXES (PREFIX, URL) VALUES (?, ?)")) {
                         stmt.setString(1, entry.getKey());
                         stmt.setString(2, entry.getValue());
                         System.out.println(entry.getKey() + " -> " + entry.getValue());
@@ -267,7 +267,7 @@ public class RdfGatheringAgent {
                 }
                 conn.commit();
                 conn.setAutoCommit(true);
-                try (java.sql.Statement stmt = conn.createStatement()) {
+                try ( java.sql.Statement stmt = conn.createStatement()) {
                     String ddlFile = IOUtils.toString(getClass().getResourceAsStream("/finalize.sql"), "UTF-8");
                     String lines[] = ddlFile.split("\\r?\\n");
                     for (String line : lines) {
@@ -289,7 +289,7 @@ public class RdfGatheringAgent {
      * @throws IOException
      */
     public void fetchAndParseDepartments(Model model, Map<String, Map<String, String>> searchIndex) throws IOException {
-        try (FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
+        try ( FileReader in = new FileReader("csv" + File.separator + "departments.csv", StandardCharsets.UTF_8)) {
             Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder
                     .create(CSVFormat.DEFAULT)
                     .setHeader()
@@ -332,7 +332,7 @@ public class RdfGatheringAgent {
     public void fetchAndParseMetadata(Model model) throws IOException {
         File file = new File("metadata.csv");
         if (file.exists()) {
-            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+            try ( FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
                 Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().build().parse(in);
                 for (CSVRecord record : records) {
                     final Resource subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(record.get("instrument_number")));
@@ -348,7 +348,7 @@ public class RdfGatheringAgent {
         // Parse the regacan set from UQAM. Need to find a long-term home for this.
         File file = new File("regcan.csv");
         if (file.exists()) {
-            try (FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
+            try ( FileReader in = new FileReader(file, StandardCharsets.UTF_8)) {
                 Iterable<CSVRecord> records = org.apache.commons.csv.CSVFormat.Builder.create(CSVFormat.DEFAULT).setHeader().build().parse(in);
                 for (CSVRecord record : records) {
                     // The "SOR" identifiers Justice uses in their URLs are mangled, because the real strings use reserved URL characters.
@@ -373,6 +373,61 @@ public class RdfGatheringAgent {
                     model.add(subject, cbaWordCountProperty, record.get("CBA.wordcount"));
                     model.add(subject, riasWordCountProperty, record.get("rias.wordcount"));
                     model.add(subject, consultationWordCountProperty, record.get("consultation.wordcount"));
+                }
+            }
+        }
+    }
+
+    public void fetchAndParseAnnualStatutes(Model model, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
+        URL u = new URL(ANNUAL_STATUTES_ENGLISH_URL);
+        org.jsoup.nodes.Document doc = Jsoup.parse(u, 10000);
+        Elements links = doc.body().select("div[role='navigation'] a:contains(2017)");
+        for (String href : links.eachAttr("href")) {
+            URL u2 = new URL(u, href);
+            org.jsoup.nodes.Document doc2 = Jsoup.parse(u2, 10000);
+            Elements links2 = doc2.select("div[class='contentBlock'] a:contains(Conveyance)");
+            for (String href2 : links2.eachAttr("href")) {
+
+                URL u3 = new URL(u2, href2 + "/FullText.html");
+                URL u4 = new URL(u3.toExternalForm().replace("eng/AnnualStatutes", "fra/LoisAnnuelles").replace("FullText.html", "TexteComplet.html"));
+                Resource subject = null;
+                Map<String, String> index = new HashMap<>();
+                try {
+                    org.jsoup.nodes.Document doc3 = Jsoup.parse(u3, 10000);
+                    String title_en = doc3.selectFirst(".Title-of-Act").text();
+                    String chapterNumber_en = doc3.selectFirst(".ChapterNumber").text();
+                    String id = toUrlSafeId(chapterNumber_en);
+                    subject = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + id);
+
+                    model.add(subject, rdfTypeProperty,
+                            ResourceFactory.createResource(ACT_CLASS_URI));
+                    index = searchIndex.getOrDefault(subject.getURI(), new HashMap<>());
+                    index.put(TYPE_FIELD, ACT_TYPE_VALUE);
+                    String text_en = doc3.selectFirst(".docContents").text();
+                    model.add(subject, nameProperty, title_en, "en");
+                    model.add(subject, urlProperty, u3.toExternalForm(), "en");
+                    model.add(subject, legislationIdentifierProperty, chapterNumber_en, "en");
+                    index.put(TEXT_FIELD_ENGLISH, text_en);
+                    index.put(TITLE_FIELD_ENGLISH, title_en);
+                    index.put(LINK_FIELD_ENGLISH, u3.toExternalForm());
+
+                    org.jsoup.nodes.Document doc4 = Jsoup.parse(u4, 10000);
+                    String title_fr = doc4.selectFirst(".Title-of-Act").text();
+                    String chapterNumber_fr = doc4.selectFirst(".ChapterNumber").text();
+                    String text_fr = doc4.selectFirst(".docContents").text();
+                    System.out.println("" + subject.getURI() + " - " + title_en + " - " + title_fr);
+                    model.add(subject, nameProperty, title_fr, "fr");
+                    model.add(subject, urlProperty, u4.toExternalForm(), "fr");
+                    model.add(subject, legislationIdentifierProperty, chapterNumber_fr, "fr");
+                    index.put(TEXT_FIELD_FRENCH, text_fr);
+                    index.put(TITLE_FIELD_FRENCH, title_fr);
+                    index.put(LINK_FIELD_FRENCH, u4.toExternalForm());
+
+                } catch (Exception ex) {
+                    Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (subject != null) {
+                    searchIndex.put(subject.getURI(), index);
                 }
             }
         }
@@ -782,7 +837,7 @@ public class RdfGatheringAgent {
     }
 
     private String toUrlSafeId(String item) {
-        return item.trim()
+        item = item.trim()
                 .replaceAll("/", "-")
                 .replaceAll(" ", "_")
                 //The next few lines address data quality issues in the published set.
@@ -791,6 +846,10 @@ public class RdfGatheringAgent {
                 .replaceAll("S.C.2020", "S.C._2020")
                 .replaceAll("S._C._", "S.C._")
                 .replaceAll("R.S.C.,", "R.S.C.");
+        if (item.startsWith("S.C._")) {
+            item = item.replaceAll(",_c.", ",c.");
+        }
+        return item;
     }
 
     private CharSequence collectTextFrom(Element el) {

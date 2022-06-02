@@ -64,7 +64,10 @@ public class IntegrationTest {
         // Add the CG index of statutory instruments to the model.
         knownStatutoryInstruments.addAll(agent.fetchAndParseStatutoryInstruments(model));
 
-        // Add local facts and prefixes to the model.
+        // Add annual statutes to the model.
+        agent.fetchAndParseAnnualStatutes(model, searchIndex);
+
+        // Add local department facts.
         agent.fetchAndParseDepartments(model, searchIndex);
 
         // Add the RIAS facts to the model.
