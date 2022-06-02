@@ -381,11 +381,11 @@ public class RdfGatheringAgent {
     public void fetchAndParseAnnualStatutes(Model model, Map<String, Map<String, String>> searchIndex) throws JDOMException, IOException {
         URL u = new URL(ANNUAL_STATUTES_ENGLISH_URL);
         org.jsoup.nodes.Document doc = Jsoup.parse(u, 10000);
-        Elements links = doc.body().select("div[role='navigation'] a:contains(2017)");
+        Elements links = doc.body().select("div[role='navigation'] a");
         for (String href : links.eachAttr("href")) {
             URL u2 = new URL(u, href);
             org.jsoup.nodes.Document doc2 = Jsoup.parse(u2, 10000);
-            Elements links2 = doc2.select("div[class='contentBlock'] a:contains(Conveyance)");
+            Elements links2 = doc2.select("div[class='contentBlock'] a");
             for (String href2 : links2.eachAttr("href")) {
 
                 URL u3 = new URL(u2, href2 + "/FullText.html");
