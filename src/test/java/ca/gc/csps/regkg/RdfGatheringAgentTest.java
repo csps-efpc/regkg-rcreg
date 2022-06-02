@@ -1,9 +1,13 @@
 package ca.gc.csps.regkg;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import org.apache.jena.rdf.model.Model;
+import org.apache.jena.rdf.model.ModelFactory;
+import org.jdom2.JDOMException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -12,14 +16,16 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Unit tests for parts of the RdfGathering agent. Unit coverage supports the IntegrationTest coverage that exercises most everything.
+ * Unit tests for parts of the RdfGathering agent. Unit coverage supports the
+ * IntegrationTest coverage that exercises most everything.
+ *
  * @author jturner
  */
 public class RdfGatheringAgentTest {
     
     public RdfGatheringAgentTest() {
     }
-    
+
     /**
      * Test of normalizeOICNumber method, of class RdfGatheringAgent.
      */
@@ -32,5 +38,5 @@ public class RdfGatheringAgentTest {
         // Em-dashes in data.
         assertEquals("1987-0584", instance.normalizeOICNumber("1987–584"));
     }
-
+    
 }
