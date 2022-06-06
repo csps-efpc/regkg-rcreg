@@ -123,8 +123,6 @@ public class RdfGatheringAgent {
     final PropertyImpl orderImplementsProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/order-implements");
     final PropertyImpl enablingOrderProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-order");
     final PropertyImpl consolidatesProperty = new PropertyImpl("https://schema.org/legislationConsolidates");
-    //Reciprocal property for legislationConsolidates
-    final PropertyImpl consolidatedIntoProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/consolidatedInto");
     final PropertyImpl enablesRegProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enables-regulation");
     final PropertyImpl nameProperty = new PropertyImpl("https://schema.org/name");
     final PropertyImpl urlProperty = new PropertyImpl("https://schema.org/url");
@@ -515,7 +513,7 @@ public class RdfGatheringAgent {
                         || entry.getKey().startsWith("S.C._")
                         || entry.getKey().startsWith("SI-")
                         || entry.getKey().startsWith("SOR-")) {
-                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + entry.getKey()), this.nameProperty, String.valueOf(entry.getValue()), "en");
+                    model.add(ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(entry.getKey())), this.nameProperty, String.valueOf(entry.getValue()), "en");
                 } else {
                     anomalies.report(CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL, "Unparsable Instrument: [" + entry.getKey() + "] " + entry.getValue());
                     System.out.println("Unparsable instrument: [" + entry.getKey() + "] " + entry.getValue());
@@ -602,7 +600,7 @@ public class RdfGatheringAgent {
             }
         }
         for (String amendingRegId : amendingRegIds) {
-            final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + amendingRegId);
+            final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId(amendingRegId));
             model.add(amendingReg, legislationAmendsProperty, instrumentURI);
         }
         model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
@@ -852,6 +850,10 @@ public class RdfGatheringAgent {
         if (item.startsWith("S.C._")) {
             item = item.replaceAll(",_c.", ",c.");
         }
+        if (item.startsWith("S.C.")) {
+            item = item.replaceAll("S.C", "SC");
+            item = item.replaceAll("[\\.,_]+", "-");
+        }
         return item;
     }
 
@@ -919,9 +921,9 @@ public class RdfGatheringAgent {
                 if (annualStatuteId != null) {
                     String statuteNumber = annualStatuteId.getChildTextTrim("AnnualStatuteNumber");
                     // There's nonsense in these that is not numbers. We're only going down to the chapter level.
-                    statuteNumber=statuteNumber.split("[^0-9]+")[0];
+                    statuteNumber = statuteNumber.split("[^0-9]+")[0];
                     String statuteYear = annualStatuteId.getChildTextTrim("YYYY");
-                    final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + "S.C._" + statuteYear + ",c._" + statuteNumber);
+                    final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + toUrlSafeId("S.C._" + statuteYear + ",c._" + statuteNumber));
                     model.add(instrumentURI, consolidatesProperty, amendingReg);
                 }
             }
