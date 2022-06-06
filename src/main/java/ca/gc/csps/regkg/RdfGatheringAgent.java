@@ -123,6 +123,8 @@ public class RdfGatheringAgent {
     final PropertyImpl orderImplementsProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/order-implements");
     final PropertyImpl enablingOrderProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enabling-order");
     final PropertyImpl consolidatesProperty = new PropertyImpl("https://schema.org/legislationConsolidates");
+    //Reciprocal property for legislationConsolidates
+    final PropertyImpl consolidatedIntoProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/consolidatedInto");
     final PropertyImpl enablesRegProperty = new PropertyImpl("https://laws-lois.justice.gc.ca/ext/enables-regulation");
     final PropertyImpl nameProperty = new PropertyImpl("https://schema.org/name");
     final PropertyImpl urlProperty = new PropertyImpl("https://schema.org/url");
@@ -407,9 +409,11 @@ public class RdfGatheringAgent {
                     model.add(subject, nameProperty, title_en, "en");
                     model.add(subject, urlProperty, u3.toExternalForm(), "en");
                     model.add(subject, legislationIdentifierProperty, chapterNumber_en, "en");
-                    index.put(TEXT_FIELD_ENGLISH, text_en);
-                    index.put(TITLE_FIELD_ENGLISH, title_en);
-                    index.put(LINK_FIELD_ENGLISH, u3.toExternalForm());
+                    // The statutes are not expressed in the esrch index, as the entity sought
+                    // is almost certainly the consolidated form.
+                    //index.put(TEXT_FIELD_ENGLISH, text_en);
+                    //index.put(TITLE_FIELD_ENGLISH, title_en);
+                    //index.put(LINK_FIELD_ENGLISH, u3.toExternalForm());
 
                     org.jsoup.nodes.Document doc4 = Jsoup.parse(u4, 10000);
                     String title_fr = doc4.selectFirst(".Title-of-Act").text();
@@ -419,9 +423,9 @@ public class RdfGatheringAgent {
                     model.add(subject, nameProperty, title_fr, "fr");
                     model.add(subject, urlProperty, u4.toExternalForm(), "fr");
                     model.add(subject, legislationIdentifierProperty, chapterNumber_fr, "fr");
-                    index.put(TEXT_FIELD_FRENCH, text_fr);
-                    index.put(TITLE_FIELD_FRENCH, title_fr);
-                    index.put(LINK_FIELD_FRENCH, u4.toExternalForm());
+                    //index.put(TEXT_FIELD_FRENCH, text_fr);
+                    //index.put(TITLE_FIELD_FRENCH, title_fr);
+                    //index.put(LINK_FIELD_FRENCH, u4.toExternalForm());
 
                 } catch (Exception ex) {
                     Logger.getLogger(RdfGatheringAgent.class.getName()).log(Level.SEVERE, null, ex);
@@ -599,7 +603,6 @@ public class RdfGatheringAgent {
         }
         for (String amendingRegId : amendingRegIds) {
             final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + amendingRegId);
-            model.add(instrumentURI, consolidatesProperty, amendingReg);
             model.add(amendingReg, legislationAmendsProperty, instrumentURI);
         }
         model.add(instrumentURI, sectionCountProperty, String.valueOf(sectionCount));
@@ -908,6 +911,19 @@ public class RdfGatheringAgent {
             }
             if (title == null) {
                 title = identification.getChildTextNormalize("InstrumentNumber");
+            }
+            // Pick amending reference from the proper spot in the XML tree.
+            Element chapter = identification.getChild("Chapter");
+            if (chapter != null) {
+                Element annualStatuteId = chapter.getChild("AnnualStatuteId");
+                if (annualStatuteId != null) {
+                    String statuteNumber = annualStatuteId.getChildTextTrim("AnnualStatuteNumber");
+                    // There's nonsense in these that is not numbers. We're only going down to the chapter level.
+                    statuteNumber=statuteNumber.split("[^0-9]+")[0];
+                    String statuteYear = annualStatuteId.getChildTextTrim("YYYY");
+                    final Resource amendingReg = ResourceFactory.createResource(STATUTORY_INSTRUMENT_PREFIX + "S.C._" + statuteYear + ",c._" + statuteNumber);
+                    model.add(instrumentURI, consolidatesProperty, amendingReg);
+                }
             }
 
             // If there isn't already a name property in the model for this instrument, use the one we have here. 
