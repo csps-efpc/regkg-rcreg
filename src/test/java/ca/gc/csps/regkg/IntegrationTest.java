@@ -6,8 +6,11 @@ import java.io.OutputStream;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import org.apache.commons.io.FileUtils;
+import org.apache.jena.query.Dataset;
+import org.apache.jena.query.ReadWrite;
 import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
+import org.apache.jena.tdb2.TDB2Factory;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mapdb.DB;
@@ -21,6 +24,7 @@ public class IntegrationTest {
 
     private static final String ANOMALY_BUILD_PATH = "./target/anomalies.txt";
     private static final String TTL_BUILD_PATH = "./target/out.ttl";
+    private static final String TDB_BUILD_PATH = "./target/tdb2";
     private static final String SQLITE_BUILD_PATH = "./target/out.sqlite3";
     private static final String INDEX_BUILD_PATH = "./target/out.json";
     private static final String MAPDB_BUILD_PATH = "./target/build.mdb";
@@ -50,8 +54,12 @@ public class IntegrationTest {
         // subjects in the Jena Model. The URIs will be shortened to match the 
         // Jena ones at serialization time.
         Map<String, Map<String, String>> searchIndex = db.hashMap("searchindex", Serializer.STRING_ASCII, Serializer.JAVA).createOrOpen();
-        Model model = ModelFactory.createDefaultModel();
+        Dataset tdbDataset = TDB2Factory.connectDataset(TDB_BUILD_PATH);
+//        Model model = ModelFactory.createDefaultModel();
+        tdbDataset.begin(ReadWrite.WRITE);
+        Model model = tdbDataset.getDefaultModel();
         RdfGatheringAgent agent = new RdfGatheringAgent();
+
         // Add local facts and prefixes to the model.
         boolean pass = agent.fetchAndParseLocalTriples(new File("rdf"), model);
 
@@ -81,12 +89,15 @@ public class IntegrationTest {
 
         // Add the Orders-In-Council facts to the model.
         agent.fetchAndParseOrdersInCouncil(model, searchIndex, 2500);
-
+        tdbDataset.commit();
+        tdbDataset.end();
+        tdbDataset.begin(ReadWrite.READ);
+        model = tdbDataset.getDefaultModel();
         Assertions.assertTrue(pass, "RDF parsing errors occurred.");
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }
@@ -97,10 +108,12 @@ public class IntegrationTest {
         agent.writeIndexToJson(searchIndex, new File(INDEX_BUILD_PATH));
 
         // Write the anomaly report out
-        try (FileOutputStream fos = new FileOutputStream(new File(ANOMALY_BUILD_PATH))) {
+        try ( FileOutputStream fos = new FileOutputStream(new File(ANOMALY_BUILD_PATH))) {
             agent.getAnomalies().writeReport(fos);
             fos.flush();
         }
+        tdbDataset.close();
+        FileUtils.deleteDirectory(new File(TDB_BUILD_PATH));
     }
 
 }
