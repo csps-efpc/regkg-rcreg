@@ -3,6 +3,9 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ca.gc.csps</groupId>
     <name>Regulatory Knowledge Graph</name>
+    <description>The Regulatory Knowledge Graph is an application that gathers 
+        the set of elements comprising the Canadian regulatory domain, 
+        and assembles them into an integrated RDF graph.</description>
     <artifactId>regkg-rcreg</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
