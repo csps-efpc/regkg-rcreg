@@ -54,6 +54,7 @@ public class IntegrationTest {
         // subjects in the Jena Model. The URIs will be shortened to match the 
         // Jena ones at serialization time.
         Map<String, Map<String, String>> searchIndex = db.hashMap("searchindex", Serializer.STRING_ASCII, Serializer.JAVA).createOrOpen();
+        FileUtils.deleteDirectory(new File(TDB_BUILD_PATH));
         Dataset tdbDataset = TDB2Factory.connectDataset(TDB_BUILD_PATH);
 //        Model model = ModelFactory.createDefaultModel();
         tdbDataset.begin(ReadWrite.WRITE);
@@ -97,7 +98,7 @@ public class IntegrationTest {
         System.out.println("Parsed " + model.size() + " triples.");
 
         // Write the whole model out as a turtle file.
-        try ( OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
+        try (OutputStream ttlOutputStream = new FileOutputStream(TTL_BUILD_PATH)) {
             model.write(ttlOutputStream, "TTL");
             ttlOutputStream.flush();
         }
@@ -108,12 +109,12 @@ public class IntegrationTest {
         agent.writeIndexToJson(searchIndex, new File(INDEX_BUILD_PATH));
 
         // Write the anomaly report out
-        try ( FileOutputStream fos = new FileOutputStream(new File(ANOMALY_BUILD_PATH))) {
+        try (FileOutputStream fos = new FileOutputStream(new File(ANOMALY_BUILD_PATH))) {
             agent.getAnomalies().writeReport(fos);
             fos.flush();
         }
         tdbDataset.close();
-        FileUtils.deleteDirectory(new File(TDB_BUILD_PATH));
+
     }
 
 }
