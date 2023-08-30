@@ -83,7 +83,7 @@ public class RdfGatheringAgent {
     private static final String ORDER_IN_COUNCIL_URL_ENGLISH = "https://orders-in-council.canada.ca/";
     private static final String ORDER_IN_COUNCIL_URL_FRENCH = "https://decrets.canada.ca/";
     private static final String CONSOLIDATED_INDEX_OF_STATUTORY_INSTRUMENTS_ENGLISH_URL
-            = "https://www.gazette.gc.ca/rp-pr/p2/2022/2022-09-30-c3/?-eng.html";
+            = "https://www.gazette.gc.ca/rp-pr/p2/2023/2023-06-30-c2/?-eng.html";
     private static final String CG_PART_II_ENGLISH_URL = "https://gazette.gc.ca/rp-pr/publications-eng.html";
 
     private static final String ACT_CLASS_URI = "https://canada.ca/ext/act-loi";
