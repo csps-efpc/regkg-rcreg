@@ -183,7 +183,7 @@
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
-            <version>1.10.0</version> <!-- for CVE-2022-42889, can remove once htmlunit-driver updates -->
+            <version>1.12.0</version> <!-- for CVE-2022-42889, can remove once htmlunit-driver updates -->
         </dependency>
         <dependency>
             <groupId>com.github.spotbugs</groupId>
